@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#92232a">
+  <title>Agendar banho e tosa | Love Pets Lavras</title>
+  <meta name="description" content="Escolha um horário para seu cão ou gato na Love Pets, em Lavras. Solicite banho ou tosa online.">
+  <link rel="icon" type="image/webp" href="/assets/love-pets-logo.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/schedule.css">
+  <script src="/booking.js" defer></script>
+</head>
+<body class="booking-page">
+  <a class="skip-link" href="#agendamento">Pular para o agendamento</a>
+  <div class="top-strip"><span>LOVE PETS · LAVRAS, MG</span><span>Banho e tosa com hora marcada</span></div>
+  <header class="schedule-header"><a href="/" aria-label="Love Pets, voltar ao início"><img src="/assets/love-pets-logo.webp" alt="Love Pets" width="155" height="68"></a><nav aria-label="Navegação"><a href="/">Voltar ao site</a><a class="header-help" href="https://wa.me/5535999146809?text=Ol%C3%A1%21%20Preciso%20de%20ajuda%20com%20um%20agendamento." target="_blank" rel="noopener">Precisa de ajuda?</a></nav></header>
+  <main class="booking-layout" id="agendamento">
+    <section class="booking-intro"><div class="eyebrow"><span></span> AGENDE ONLINE</div><h1>Um horário só<br>para <em>ele.</em></h1><p>Escolha o cuidado, veja os horários livres e envie sua solicitação. A equipe confirma os detalhes com você pelo WhatsApp.</p><div class="intro-notice"><span class="notice-icon" aria-hidden="true">♡</span><div><strong>Seu pet em boas mãos.</strong><span>Atendemos cães e gatos em Lavras. Cada serviço tem um tempo reservado na agenda.</span></div></div><div class="intro-bottom">LOVE PETS <span>✦</span> LAVRAS</div></section>
+    <section class="booking-card" aria-labelledby="booking-title"><div class="card-head"><span class="step-pill">01—03</span><h2 id="booking-title">Escolha o melhor momento</h2><p>Os horários exibidos são atualizados pela agenda da Love Pets.</p></div>
+      <form id="booking-form" novalidate>
+        <fieldset class="form-section"><legend><span>01</span> O que seu pet precisa?</legend><div id="service-options" class="service-options" aria-live="polite"><span class="muted">Carregando serviços...</span></div><div class="species-options" role="group" aria-label="Tipo de pet"><label><input type="radio" name="petType" value="cao" required checked><span>🐶 Cachorrinho</span></label><label><input type="radio" name="petType" value="gato" required><span>🐱 Gatinho</span></label></div></fieldset>
+        <fieldset class="form-section"><legend><span>02</span> Dia e horário</legend><label class="field-label" for="date">Escolha uma data</label><input id="date" name="date" type="date" required><div id="slot-status" class="slot-status" aria-live="polite">Selecione uma data para ver os horários.</div><div id="time-options" class="time-options" role="group" aria-label="Horários disponíveis"></div></fieldset>
+        <fieldset class="form-section personal"><legend><span>03</span> Sobre vocês</legend><div class="field-grid"><label>Nome do pet<input name="petName" type="text" maxlength="80" autocomplete="off" required placeholder="Ex.: Mel"></label><label>Seu nome<input name="guardianName" type="text" maxlength="100" autocomplete="name" required placeholder="Como podemos chamar você?"></label><label>WhatsApp com DDD<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="(35) 99999-9999"></label><label>E-mail <small>(opcional)</small><input name="email" type="email" maxlength="120" autocomplete="email" placeholder="voce@exemplo.com"></label></div><label class="notes-label">Algo que a equipe deve saber? <small>(opcional)</small><textarea name="notes" maxlength="500" rows="3" placeholder="Ex.: sensibilidade, cuidados especiais ou preferência"></textarea></label><div class="honeypot" aria-hidden="true"><label>Seu site<input name="website" tabindex="-1" autocomplete="off"></label></div></fieldset>
+        <div id="form-message" class="form-message" role="status" aria-live="polite"></div><button class="submit-booking" type="submit">Solicitar horário <span aria-hidden="true">↗</span></button><p class="form-footnote">Sua solicitação fica pendente até a confirmação da equipe. Seus dados serão usados para falar sobre este atendimento.</p>
+      </form>
+      <div id="booking-success" class="booking-success" hidden><div class="success-icon" aria-hidden="true">✓</div><h2>Pedido recebido!</h2><p id="success-detail"></p><p>A equipe da Love Pets confirma seu horário pelo WhatsApp. Até lá, ele aparece como <strong>pendente</strong> na agenda.</p><div class="success-actions"><a id="calendar-download" class="submit-booking" href="#">Adicionar ao calendário</a><a href="/" class="return-link">Voltar ao site</a></div></div>
+    </section>
+  </main>
+  <footer class="schedule-footer"><span>© Love Pets · Lavras, MG</span><a href="https://www.instagram.com/lovepetslavras/" target="_blank" rel="noopener">@lovepetslavras</a></footer>
+</body>
+</html>

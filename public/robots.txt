@@ -1,3 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api/
 Sitemap: https://love-pets-lavras.duduwwl.chatgpt.site/sitemap.xml

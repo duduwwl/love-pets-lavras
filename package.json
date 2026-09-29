@@ -1,0 +1,14 @@
+{
+  "name": "love-pets-lavras",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "db:generate": "drizzle-kit generate",
+    "check": "node --check worker/index.js && node --check public/booking.js && node --check public/admin.js && node --check public/app.js"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.44.2"
+  }
+}

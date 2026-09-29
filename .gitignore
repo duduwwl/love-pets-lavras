@@ -1,2 +1,6 @@
 preview-server.mjs
 release.tar.gz
+node_modules/
+dist/
+.wrangler/
+.sites-runtime/
