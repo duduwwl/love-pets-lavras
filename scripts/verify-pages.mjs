@@ -3,11 +3,11 @@ import {existsSync,readFileSync,readdirSync} from 'node:fs';
 import {join} from 'node:path';
 const root=join(process.cwd(),'docs');
 const base='/love-pets-lavras/';
-const pages=['index.html','produtos/index.html','agendar/index.html','equipe/index.html','404.html'];
+const pages=['index.html','produtos/index.html','agendar/index.html','equipe/index.html','admin/index.html','404.html'];
 let references=0;
 for(const path of pages){
  const html=readFileSync(join(root,path),'utf8');
- for(const [,value] of html.matchAll(/(?:href|src)="([^"]*)"/g)){
+ for(const [,value] of html.matchAll(/(?:href|src|action)="([^"]*)"/g)){
   if(!value.startsWith('/'))continue;
   assert(value.startsWith(base),`${path}: wrong base ${value}`);
   const destination=value.slice(base.length).split('#')[0].split('?')[0];
@@ -18,6 +18,13 @@ for(const path of pages){
 const home=readFileSync(join(root,'index.html'),'utf8');
 assert(!home.includes('id="product-grid"'));
 assert(!home.includes('id="booking-form"'));
+assert(!home.includes('id="sobre"'));
+assert(!home.includes('hero-footnote'));
+assert(!home.includes('hero-bottom'));
+assert(home.includes('href="https://love-pets-lavras.duduwwl.chatgpt.site/agendar"'));
+assert(readFileSync(join(root,'agendar/index.html'),'utf8').includes('location.replace'));
+assert(readFileSync(join(root,'equipe/index.html'),'utf8').includes('value="lovepets-demo"'));
+assert(readFileSync(join(root,'admin/index.html'),'utf8').includes('demo-admin-data.js'));
 const products=JSON.parse(readFileSync(join(root,'products.json'),'utf8'));
 assert.equal(products.length,22);
 const counts={mantinhas:4,roupinhas:4,caminhas:4,caes:5,gatos:5};
@@ -29,4 +36,4 @@ for(const product of products){
 assert(!existsSync(join(root,'admin.html')));
 assert(!existsSync(join(root,'admin.js')));
 assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));
-console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, admin excluded.`);
+console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, direct booking links, fictional admin demo.`);

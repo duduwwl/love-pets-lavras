@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420">
+  <defs><g id="paw" fill="#ffc78f"><ellipse cx="-22" cy="-12" rx="9" ry="12" transform="rotate(-25 -22 -12)"/><ellipse cx="-8" cy="-27" rx="9" ry="12" transform="rotate(-8 -8 -27)"/><ellipse cx="10" cy="-27" rx="9" ry="12" transform="rotate(12 10 -27)"/><ellipse cx="24" cy="-12" rx="9" ry="12" transform="rotate(28 24 -12)"/><path d="M-24 18C-28 4-11-9 0-7C11-9 28 4 24 18C20 31 8 19 0 20C-8 19-20 31-24 18Z"/></g></defs>
+  <use href="#paw" transform="translate(75 65) rotate(-24) scale(.72)"/>
+  <use href="#paw" transform="translate(270 185) rotate(20) scale(1.06)"/>
+  <use href="#paw" transform="translate(95 350) rotate(-8) scale(.88)"/>
+</svg>

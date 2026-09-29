@@ -74,3 +74,13 @@ body,button,input,select,textarea{font-family:'Plus Jakarta Sans',Arial,sans-ser
 .booking-access-photo>span{position:absolute;left:24px;bottom:25px;background:var(--orange);color:#fff;padding:12px 19px;border-radius:100px;font-size:13px;font-weight:600}
 @media(max-width:820px){.booking-access{grid-template-columns:1.1fr .9fr}.booking-access-copy{padding:50px 25px}.booking-access-copy h1{font-size:3.4rem}.booking-access-details{display:none}.booking-access-photo{min-height:510px}}
 @media(max-width:560px){.booking-access{display:block}.booking-access-copy{padding:42px 22px 45px}.booking-access-copy h1{font-size:3.1rem}.booking-access-copy>p{font-size:16px}.booking-access-photo{height:340px;min-height:0}.booking-access-photo img{object-position:center 40%}.booking-access-photo>span{font-size:12px;left:20px;bottom:20px}}
+
+.demo-password{display:block;font-size:14px;font-weight:600;margin:25px 0 12px}
+.demo-password input{display:block;width:100%;margin-top:9px;padding:15px 17px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;color:var(--ink)}
+.team-entry button.submit-booking{border:0;cursor:pointer;width:100%}
+.team-entry .return-link{display:block;margin-top:14px}
+.demo-banner{margin:25px 0;padding:18px 22px;border:1px solid #ecb186;border-radius:14px;background:#ffeedf;color:#66321c;display:flex;gap:20px;align-items:center;justify-content:space-between;font-size:14px}
+.demo-banner p{margin:0;line-height:1.65}
+.demo-banner strong{font-weight:600}
+.demo-banner button{white-space:nowrap;border:1px solid #9d5739;border-radius:99px;padding:10px 16px;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer}
+@media(max-width:680px){.demo-banner{display:block;padding:16px}.demo-banner button{margin-top:12px}.team-entry{margin-block:35px 50px}}
