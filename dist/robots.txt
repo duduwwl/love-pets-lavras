@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://love-pets-lavras.duduwwl.chatgpt.site/sitemap.xml
