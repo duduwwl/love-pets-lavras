@@ -1,19 +1,9 @@
 # Love Pets Lavras
 
-Site institucional estático com catálogo por categorias. Os dados comerciais conhecidos estão no conteúdo da página. Produtos individuais ainda não foram fornecidos; por isso `dist/products.json` começa vazio e nenhuma oferta, preço ou estoque é exibido sem dados reais.
+Landing page estática da Love Pets, com banho e tosa, contato e catálogo visual. A interface é responsiva e usa HTML, CSS e JavaScript sem dependência de build.
 
-Para adicionar um produto, inclua um objeto em `dist/products.json`:
+O catálogo em `dist/products.json` reúne 22 **referências ilustrativas**: quatro mantinhas, quatro roupinhas, quatro caminhas, cinco acessórios para cães e cinco para gatos. As imagens são composições geradas para representar estilos, não fotografias de estoque confirmado. O site informa que modelos, tamanhos, cores, preços e disponibilidade devem ser consultados com a loja pelo WhatsApp.
 
-```json
-{
-  "name": "Nome real do produto",
-  "category": "mantinhas",
-  "categoryLabel": "Mantinhas",
-  "price": "R$ 00,00",
-  "description": "Descrição confirmada pela loja.",
-  "images": ["/assets/foto-do-produto.jpg"],
-  "variants": ["P", "M"]
-}
-```
+Cada produto aponta para uma folha de imagens em `dist/assets/`. `col` e `row` indicam a célula, começando em zero; `cols` e `rows` indicam as dimensões da grade. Para substituir uma referência por foto real, atualize a imagem e os campos correspondentes. Não publique preço ou disponibilidade sem confirmação da Love Pets.
 
-Categorias aceitas: `mantinhas`, `roupinhas`, `caminhas`, `caes`, `gatos`. `price`, `description` e `variants` são opcionais. A foto, o nome e a categoria são necessários. A página exibe os produtos e abre detalhes com galeria, variação e mensagem personalizada para o WhatsApp.
+Para pré-visualização local, sirva a pasta `dist` com um servidor HTTP. O arquivo `preview-server.mjs` já está configurado para isso. O deploy usa o diretório estático `dist` definido em `.openai/hosting.json`.

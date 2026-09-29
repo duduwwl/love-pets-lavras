@@ -1,1 +1,24 @@
-[]
+[
+  {"name":"Manta canelada terracota","category":"mantinhas","categoryLabel":"Mantinhas","image":"/assets/mantinhas.webp","col":0,"row":0,"cols":2,"rows":2},
+  {"name":"Manta sherpa creme","category":"mantinhas","categoryLabel":"Mantinhas","image":"/assets/mantinhas.webp","col":1,"row":0,"cols":2,"rows":2},
+  {"name":"Manta matelassê caramelo","category":"mantinhas","categoryLabel":"Mantinhas","image":"/assets/mantinhas.webp","col":0,"row":1,"cols":2,"rows":2},
+  {"name":"Manta xadrez aconchego","category":"mantinhas","categoryLabel":"Mantinhas","image":"/assets/mantinhas.webp","col":1,"row":1,"cols":2,"rows":2},
+  {"name":"Suéter de tricô vinho","category":"roupinhas","categoryLabel":"Roupinhas","image":"/assets/roupinhas.webp","col":0,"row":0,"cols":2,"rows":2},
+  {"name":"Capa de chuva caramelo","category":"roupinhas","categoryLabel":"Roupinhas","image":"/assets/roupinhas.webp","col":1,"row":0,"cols":2,"rows":2},
+  {"name":"Colete acolchoado creme","category":"roupinhas","categoryLabel":"Roupinhas","image":"/assets/roupinhas.webp","col":0,"row":1,"cols":2,"rows":2},
+  {"name":"Bandana terracota","category":"roupinhas","categoryLabel":"Roupinhas","image":"/assets/roupinhas.webp","col":1,"row":1,"cols":2,"rows":2},
+  {"name":"Caminha oval cacau","category":"caminhas","categoryLabel":"Caminhas","image":"/assets/caminhas.webp","col":0,"row":0,"cols":2,"rows":2},
+  {"name":"Ninho de pelúcia creme","category":"caminhas","categoryLabel":"Caminhas","image":"/assets/caminhas.webp","col":1,"row":0,"cols":2,"rows":2},
+  {"name":"Sofá pet terracota","category":"caminhas","categoryLabel":"Caminhas","image":"/assets/caminhas.webp","col":0,"row":1,"cols":2,"rows":2},
+  {"name":"Cama baixa de madeira","category":"caminhas","categoryLabel":"Caminhas","image":"/assets/caminhas.webp","col":1,"row":1,"cols":2,"rows":2},
+  {"name":"Copo limpa-patas","category":"caes","categoryLabel":"Acessórios para cães","image":"/assets/acessorios-caes.webp","col":0,"row":0,"cols":3,"rows":2},
+  {"name":"Shampoo suave","category":"caes","categoryLabel":"Acessórios para cães","image":"/assets/acessorios-caes.webp","col":1,"row":0,"cols":3,"rows":2},
+  {"name":"Corda para brincar","category":"caes","categoryLabel":"Acessórios para cães","image":"/assets/acessorios-caes.webp","col":2,"row":0,"cols":3,"rows":2},
+  {"name":"Escova massageadora","category":"caes","categoryLabel":"Acessórios para cães","image":"/assets/acessorios-caes.webp","col":0,"row":1,"cols":3,"rows":2},
+  {"name":"Bola porta-petiscos","category":"caes","categoryLabel":"Acessórios para cães","image":"/assets/acessorios-caes.webp","col":1,"row":1,"cols":3,"rows":2},
+  {"name":"Creme para pelagem","category":"gatos","categoryLabel":"Acessórios para gatos","image":"/assets/acessorios-gatos.webp","col":0,"row":0,"cols":3,"rows":2},
+  {"name":"Varinha de penas","category":"gatos","categoryLabel":"Acessórios para gatos","image":"/assets/acessorios-gatos.webp","col":1,"row":0,"cols":3,"rows":2},
+  {"name":"Comedouro de cerâmica","category":"gatos","categoryLabel":"Acessórios para gatos","image":"/assets/acessorios-gatos.webp","col":2,"row":0,"cols":3,"rows":2},
+  {"name":"Túnel para brincar","category":"gatos","categoryLabel":"Acessórios para gatos","image":"/assets/acessorios-gatos.webp","col":0,"row":1,"cols":3,"rows":2},
+  {"name":"Brinquedo com catnip","category":"gatos","categoryLabel":"Acessórios para gatos","image":"/assets/acessorios-gatos.webp","col":1,"row":1,"cols":3,"rows":2}
+]

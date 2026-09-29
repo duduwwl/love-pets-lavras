@@ -1,10 +1,102 @@
-const menuButton=document.querySelector('.menu-toggle');const mobileMenu=document.querySelector('.mobile-menu');menuButton?.addEventListener('click',()=>{const open=menuButton.getAttribute('aria-expanded')==='true';menuButton.setAttribute('aria-expanded',String(!open));mobileMenu.hidden=open;});mobileMenu?.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{mobileMenu.hidden=true;menuButton.setAttribute('aria-expanded','false');}));
-document.querySelectorAll('.category-button').forEach(button=>button.addEventListener('click',()=>{const category=button.dataset.category;document.querySelectorAll('.category-button').forEach(item=>{const selected=item===button;item.classList.toggle('active',selected);item.setAttribute('aria-pressed',String(selected));});document.querySelectorAll('.category-card').forEach(card=>{card.hidden=category!=='todos'&&!card.dataset.category.split(' ').includes(category);});}));
-const year=document.querySelector('#year');if(year)year.textContent=new Date().getFullYear();
-const productGrid=document.querySelector('#products-grid');const productDialog=document.querySelector('#product-dialog');let products=[];
-const waForProduct=(product,variation='')=>{const detail=variation?` na variação ${variation}`:'';return `https://wa.me/5535999146809?text=${encodeURIComponent(`Olá! Vi este produto no site da Love Pets e gostaria de saber mais sobre ${product.name}${detail}.`)}`};
-function renderProducts(){if(!productGrid)return;productGrid.replaceChildren();const active=document.querySelector('.category-button.active')?.dataset.category||'todos';const visible=products.filter(product=>active==='todos'||product.category===active);productGrid.hidden=visible.length===0;for(const product of visible){const card=document.createElement('article');card.className='product-card';const img=document.createElement('img');img.src=product.images?.[0]||'';img.alt=product.name;img.loading='lazy';const info=document.createElement('div');info.className='product-card-info';const category=document.createElement('span');category.textContent=product.categoryLabel||product.category;const title=document.createElement('h3');title.textContent=product.name;const price=document.createElement('p');price.textContent=product.price||'Consulte o valor';const button=document.createElement('button');button.type='button';button.textContent='Ver detalhes';button.addEventListener('click',()=>openProduct(product));info.append(category,title,price,button);card.append(img,info);productGrid.append(card)}}
-function openProduct(product){if(!productDialog)return;productDialog.querySelector('#product-title').textContent=product.name;productDialog.querySelector('.dialog-category').textContent=product.categoryLabel||product.category;productDialog.querySelector('.dialog-price').textContent=product.price||'Consulte o valor';productDialog.querySelector('.dialog-description').textContent=product.description||'';const gallery=productDialog.querySelector('.dialog-gallery');gallery.replaceChildren();for(const source of product.images||[]){const img=document.createElement('img');img.src=source;img.alt=product.name;gallery.append(img)}const variationLabel=productDialog.querySelector('.variation-label');const variationSelect=productDialog.querySelector('.variation-select');variationSelect.replaceChildren();variationLabel.hidden=!product.variants?.length;for(const variant of product.variants||[]){const option=document.createElement('option');option.value=variant;option.textContent=variant;variationSelect.append(option)}const cta=productDialog.querySelector('.dialog-whatsapp');const updateLink=()=>cta.href=waForProduct(product,variationLabel.hidden?'':variationSelect.value);variationSelect.onchange=updateLink;updateLink();productDialog.showModal()}
-productDialog?.querySelector('.dialog-close')?.addEventListener('click',()=>productDialog.close());productDialog?.addEventListener('click',event=>{if(event.target===productDialog)productDialog.close()});
-document.querySelectorAll('.category-button').forEach(button=>button.addEventListener('click',renderProducts));
-fetch('/products.json').then(response=>response.ok?response.json():[]).then(data=>{products=Array.isArray(data)?data.filter(product=>product.name&&product.category&&product.images?.length):[];renderProducts()}).catch(()=>{});
+const menuButton = document.querySelector('.menu-toggle');
+const mobileMenu = document.querySelector('#mobile-menu');
+menuButton?.addEventListener('click', () => {
+  const next = menuButton.getAttribute('aria-expanded') !== 'true';
+  menuButton.setAttribute('aria-expanded', String(next));
+  menuButton.setAttribute('aria-label', next ? 'Fechar menu' : 'Abrir menu');
+  mobileMenu.hidden = !next;
+});
+mobileMenu?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+  mobileMenu.hidden = true;
+  menuButton.setAttribute('aria-expanded', 'false');
+  menuButton.setAttribute('aria-label', 'Abrir menu');
+}));
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && mobileMenu && !mobileMenu.hidden) {
+    mobileMenu.hidden = true;
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.focus();
+  }
+});
+document.querySelector('#year').textContent = new Date().getFullYear();
+
+const categoryLabels = { mantinhas: 'Mantinhas', roupinhas: 'Roupinhas', caminhas: 'Caminhas', caes: 'Acessórios para cães', gatos: 'Acessórios para gatos' };
+const tabs = [...document.querySelectorAll('.shop-tab')];
+const grid = document.querySelector('#product-grid');
+const dialog = document.querySelector('#product-dialog');
+let products = [];
+let currentCategory = 'mantinhas';
+
+function setProductImage(element, product) {
+  element.style.backgroundImage = `url("${product.image}")`;
+  element.style.backgroundSize = `${product.cols * 100}% ${product.rows * 100}%`;
+  element.style.backgroundPosition = `${product.col / (product.cols - 1) * 100}% ${product.row / (product.rows - 1) * 100}%`;
+  element.setAttribute('aria-label', `Imagem ilustrativa de ${product.name}`);
+}
+
+function whatsappFor(product) {
+  const message = `Olá! Vi a referência visual de ${product.name} no site da Love Pets. Vocês têm alguma opção parecida? Gostaria de saber preço, tamanhos e disponibilidade.`;
+  return `https://wa.me/5535999146809?text=${encodeURIComponent(message)}`;
+}
+
+function openProduct(product) {
+  dialog.querySelector('.dialog-category').textContent = product.categoryLabel;
+  dialog.querySelector('#product-title').textContent = product.name;
+  setProductImage(dialog.querySelector('.dialog-visual'), product);
+  dialog.querySelector('.dialog-whatsapp').href = whatsappFor(product);
+  dialog.showModal();
+}
+
+function renderProducts() {
+  grid.replaceChildren();
+  document.querySelector('#current-category').textContent = categoryLabels[currentCategory];
+  for (const product of products.filter(item => item.category === currentCategory)) {
+    const card = document.createElement('article');
+    card.className = 'product-card';
+    const photo = document.createElement('div');
+    photo.className = 'product-photo';
+    photo.setAttribute('role', 'img');
+    setProductImage(photo, product);
+    const info = document.createElement('div');
+    info.className = 'product-info';
+    const label = document.createElement('small');
+    label.textContent = product.categoryLabel;
+    const title = document.createElement('h3');
+    title.textContent = product.name;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Ver opção ↗';
+    button.addEventListener('click', () => openProduct(product));
+    info.append(label, title, button);
+    card.append(photo, info);
+    grid.append(card);
+  }
+}
+
+function selectTab(tab) {
+  currentCategory = tab.dataset.category;
+  tabs.forEach(item => {
+    const selected = item === tab;
+    item.classList.toggle('active', selected);
+    item.setAttribute('aria-selected', String(selected));
+    item.tabIndex = selected ? 0 : -1;
+  });
+  renderProducts();
+}
+tabs.forEach((tab, index) => {
+  tab.tabIndex = index === 0 ? 0 : -1;
+  tab.addEventListener('click', () => selectTab(tab));
+  tab.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    selectTab(tabs[next]);
+    tabs[next].focus();
+  });
+});
+dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
+dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+fetch('/products.json')
+  .then(response => { if (!response.ok) throw new Error('products'); return response.json(); })
+  .then(data => { products = Array.isArray(data) ? data : []; renderProducts(); })
+  .catch(() => { grid.textContent = 'As opções estão indisponíveis no momento. Fale com a Love Pets pelo WhatsApp.'; });
