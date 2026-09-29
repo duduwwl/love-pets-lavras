@@ -155,3 +155,15 @@ h1,h2,.hero h1{letter-spacing:-.04em}
 .contact-card>div:first-child{border-top:0;padding-top:0}
 @media(max-width:900px){.hero h1{font-size:clamp(2.85rem,5.7vw,3.8rem)}.intro{grid-template-columns:1fr;padding-block:60px}.intro h2{font-size:3rem}.intro>p{display:none}#care-title{font-size:3.4rem}.contact-inner{grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:24px}.contact-card{padding:25px}.contact-map,.contact-map iframe{min-height:400px}.care-pets{gap:10px;font-size:4rem}}
 @media(max-width:680px){.hero h1{font-size:clamp(2.6rem,10.3vw,3.7rem);line-height:1.08;margin:20px 0 27px}.intro{display:block;padding-block:50px}.intro h2{font-size:2.45rem;max-width:480px}#care-title{font-size:2.8rem}.care-pets{font-size:4rem;justify-content:flex-start;margin:0 0 20px}.contact-inner{display:flex;flex-direction:column;gap:20px}.contact-map,.contact-map iframe{min-height:330px}.contact-card{padding:25px}.contact{padding-block:55px}}
+
+/* Keep every product category visible without a sideways swipe. */
+@media(max-width:900px){
+  .shop-controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;overflow:visible}
+  .shop-tab{width:100%;min-width:0;padding:10px 8px;font-size:12px}
+  .shop-tab small{margin-left:4px}
+}
+@media(max-width:680px){
+  .shop-controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .shop-tab{padding:10px 12px;font-size:13px}
+  .shop-tab:last-child{grid-column:1/-1}
+}
