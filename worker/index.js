@@ -123,8 +123,35 @@ function sameOrigin(request) {
   return !origin || origin === new URL(request.url).origin;
 }
 
+// Only the public booking endpoints are available to the GitHub Pages frontend.
+const PUBLIC_BOOKING_ORIGINS = new Set(['https://duduwwl.github.io']);
+function publicBookingPath(path) {
+  return ['/api/config', '/api/availability', '/api/appointments'].includes(path) || /^\/api\/appointments\/[0-9a-f-]{36}\.ics$/.test(path);
+}
+function bookingOriginAllowed(request) {
+  return sameOrigin(request) || PUBLIC_BOOKING_ORIGINS.has(request.headers.get('origin'));
+}
+async function apiWithCors(request, env, path) {
+  const origin = request.headers.get('origin');
+  const allowCors = publicBookingPath(path) && PUBLIC_BOOKING_ORIGINS.has(origin);
+  if(request.method === 'OPTIONS') {
+    if(!allowCors) return fail('Origem não permitida.', 403);
+    const requestedMethod = request.headers.get('access-control-request-method');
+    if(!['GET', 'POST'].includes(requestedMethod)) return fail('Método não permitido.', 405);
+    const requestedHeaders = (request.headers.get('access-control-request-headers') || '').split(',').map(h => h.trim().toLowerCase()).filter(Boolean);
+    if(requestedHeaders.some(h => h !== 'content-type')) return fail('Cabeçalho não permitido.', 403);
+    return new Response(null, {status:204,headers:{'access-control-allow-origin':origin,'access-control-allow-methods':'GET, POST','access-control-allow-headers':'Content-Type','access-control-max-age':'600','vary':'Origin'}});
+  }
+  const response = await api(request, env, path);
+  if(allowCors) {
+    response.headers.set('access-control-allow-origin', origin);
+    response.headers.set('vary', 'Origin');
+  }
+  return response;
+}
+
 async function createAppointment(request, db) {
-  if (!sameOrigin(request)) return fail('Origem não permitida.', 403);
+  if (!bookingOriginAllowed(request)) return fail('Origem não permitida.', 403);
   let body;
   try { body = await readBody(request); } catch { return fail('Não foi possível ler os dados do agendamento.'); }
   if (body.website) return fail('Não foi possível receber este pedido.');
@@ -312,7 +339,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
     try {
-      if (path.startsWith('/api/')) return await api(request, env, path);
+      if (path.startsWith('/api/')) return await apiWithCors(request, env, path);
       if (!['GET', 'HEAD'].includes(request.method)) return fail('Método não permitido.', 405);
       if (path === '/admin' || path === '/admin.html') {
         if (!isAdmin(request, env)) {
@@ -321,7 +348,7 @@ export default {
         }
         return staticResponse('/admin.html', true, request.method === 'HEAD');
       }
-      const asset = path === '/' ? '/index.html' : path === '/agendar' ? '/agendar.html' : path;
+      const asset = path === '/' ? '/index.html' : path === '/agendar' ? '/agendar.html' : path === '/produtos' ? '/produtos.html' : path;
       return staticResponse(asset, asset.endsWith('.html'), request.method === 'HEAD') || new Response('Página não encontrada.', { status: 404 });
     } catch (error) {
       console.error('Love Pets request failed', error);

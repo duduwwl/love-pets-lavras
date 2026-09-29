@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /love-pets-lavras/equipe/
+Sitemap: https://duduwwl.github.io/love-pets-lavras/sitemap.xml

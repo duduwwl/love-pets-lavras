@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:pages": "node scripts/build-pages.mjs",
     "db:generate": "drizzle-kit generate",
     "check": "node --check worker/index.js && node --check public/booking.js && node --check public/admin.js && node --check public/app.js"
   },

@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {existsSync,readFileSync,readdirSync} from 'node:fs';
+import {join} from 'node:path';
+const root=join(process.cwd(),'docs');
+const base='/love-pets-lavras/';
+const pages=['index.html','produtos/index.html','agendar/index.html','equipe/index.html','404.html'];
+let references=0;
+for(const path of pages){
+ const html=readFileSync(join(root,path),'utf8');
+ for(const [,value] of html.matchAll(/(?:href|src)="([^"]*)"/g)){
+  if(!value.startsWith('/'))continue;
+  assert(value.startsWith(base),`${path}: wrong base ${value}`);
+  const destination=value.slice(base.length).split('#')[0].split('?')[0];
+  const resolved=join(root,destination.endsWith('/')||!destination?destination+'index.html':destination);
+  assert(existsSync(resolved),`${path}: missing ${resolved}`);references++;
+ }
+}
+const home=readFileSync(join(root,'index.html'),'utf8');
+assert(!home.includes('id="product-grid"'));
+assert(!home.includes('id="booking-form"'));
+const products=JSON.parse(readFileSync(join(root,'products.json'),'utf8'));
+assert.equal(products.length,22);
+const counts={mantinhas:4,roupinhas:4,caminhas:4,caes:5,gatos:5};
+for(const [category,count] of Object.entries(counts))assert.equal(products.filter(p=>p.category===category).length,count);
+for(const product of products){
+ for(const field of ['description','usage','selection','care'])assert(product[field]?.length>20,`${product.name}: missing ${field}`);
+ assert(product.image.startsWith(base));assert(existsSync(join(root,product.image.slice(base.length))));
+}
+assert(!existsSync(join(root,'admin.html')));
+assert(!existsSync(join(root,'admin.js')));
+assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));
+console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, admin excluded.`);

@@ -79,5 +79,24 @@ assert((await data(await call(`/api/availability?date=${date}&service=banho-tosa
 assert.equal((await call('/api/admin/blocks', { method: 'POST', headers: adminHeaders, body: { date, time: '*', reason: 'Folga' } })).status, 201);
 assert.equal((await data(await call(`/api/availability?date=${date}&service=banho`))).slots.length, 0);
 assert.equal((await call(`/api/admin/appointments/${saved.id}`, { method: 'PATCH', headers: adminHeaders, body: { status: 'confirmed' } })).status, 409);
-console.log('Worker booking, conflicts, admin access, calendar, cancellation, and blocks verified.');
+const pagesOrigin = 'https://duduwwl.github.io';
+async function crossOrigin(path, method = 'GET', body, originHeader = pagesOrigin, extra = {}) {
+  return worker.fetch(new Request(origin + path, {method,headers:{origin:originHeader,...(body?{'content-type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined}),env);
+}
+const preflight = await crossOrigin('/api/appointments','OPTIONS',undefined,pagesOrigin,{'access-control-request-method':'POST','access-control-request-headers':'content-type'});
+assert.equal(preflight.status,204);
+assert.equal(preflight.headers.get('access-control-allow-origin'),pagesOrigin);
+assert.equal((await crossOrigin('/api/admin/state','OPTIONS',undefined,pagesOrigin,{'access-control-request-method':'GET'})).status,403);
+assert.equal((await crossOrigin('/api/appointments','OPTIONS',undefined,'https://untrusted.example',{'access-control-request-method':'POST'})).status,403);
+assert.equal((await crossOrigin('/api/config')).headers.get('access-control-allow-origin'),pagesOrigin);
+assert.equal((await crossOrigin('/api/admin/state')).headers.get('access-control-allow-origin'),null);
+const nextDate = new Date(`${date}T12:00:00Z`);nextDate.setUTCDate(nextDate.getUTCDate()+1);
+const pagesBooking={...booking,date:nextDate.toISOString().slice(0,10),phone:'35988887777'};
+assert.equal((await crossOrigin('/api/appointments','POST',pagesBooking,'https://untrusted.example')).status,403);
+const pagesSaved=await crossOrigin('/api/appointments','POST',pagesBooking);
+assert.equal(pagesSaved.status,201);
+assert.equal(pagesSaved.headers.get('access-control-allow-origin'),pagesOrigin);
+assert.equal((await crossOrigin('/api/appointments','POST',pagesBooking)).status,409);
+assert.equal((await call('/produtos')).status,200);
+console.log('Booking, conflicts, admin authorization, calendar, blocks, and GitHub Pages CORS verified.');
 
