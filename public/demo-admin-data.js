@@ -1,16 +1,16 @@
 // This public demo contains fictional examples only. It never calls the live API.
 (() => {
- const key='love-pets-demo-v1';
+ const key='love-pets-demo-v2';
  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const addDay=(days)=>{const d=new Date(today+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
  const sample=()=>({
   today,
-  services:[{id:'banho',label:'Banho',durationMinutes:60,enabled:true},{id:'banho_tosa',label:'Banho e tosa',durationMinutes:120,enabled:true},{id:'tosa',label:'Tosa',durationMinutes:90,enabled:true}],
+  services:[{id:'banho',label:'Banho',durationMinutes:60,enabled:true},{id:'banho-tosa',label:'Banho e tosa',durationMinutes:120,enabled:true}],
   hours:Array.from({length:7},(_,weekday)=>({weekday,enabled:weekday>=2,openTime:'12:00',closeTime:'18:00'})),
   appointments:[
    {id:'demo-1',date:addDay(1),time:'12:00',pet_name:'Luna',pet_type:'gato',guardian_name:'Cliente exemplo 1',service:'banho',duration_minutes:60,status:'pending',notes:'Exemplo fictício'},
-   {id:'demo-2',date:addDay(1),time:'14:00',pet_name:'Theo',pet_type:'cao',guardian_name:'Cliente exemplo 2',service:'banho_tosa',duration_minutes:120,status:'confirmed',notes:'Exemplo fictício'},
-   {id:'demo-3',date:addDay(2),time:'13:00',pet_name:'Mel',pet_type:'cao',guardian_name:'Cliente exemplo 3',service:'tosa',duration_minutes:90,status:'pending',notes:'Exemplo fictício'}
+   {id:'demo-2',date:addDay(1),time:'14:00',pet_name:'Theo',pet_type:'cao',guardian_name:'Cliente exemplo 2',service:'banho-tosa',duration_minutes:120,status:'confirmed',notes:'Exemplo fictício'},
+   {id:'demo-3',date:addDay(2),time:'13:00',pet_name:'Mel',pet_type:'cao',guardian_name:'Cliente exemplo 3',service:'banho',duration_minutes:60,status:'pending',notes:'Exemplo fictício'}
   ],blocks:[]
  });
  let data;
@@ -43,7 +43,7 @@
    data.hours=body.hours;save();return {ok:true};
   }
   if(url.pathname==='/api/admin/services'&&method==='PUT'){
-   if(!Array.isArray(body.services)||body.services.length!==3||body.services.some(s=>!data.services.some(item=>item.id===s.id)||!Number.isInteger(s.durationMinutes)||s.durationMinutes<30||s.durationMinutes>240||s.durationMinutes%30))throw new Error('Confira a duração dos serviços.');
+   if(!Array.isArray(body.services)||body.services.length!==data.services.length||body.services.some(s=>!data.services.some(item=>item.id===s.id)||!Number.isInteger(s.durationMinutes)||s.durationMinutes<30||s.durationMinutes>240||s.durationMinutes%30))throw new Error('Confira a duração dos serviços.');
    data.services=body.services;save();return {ok:true};
   }
   if(url.pathname==='/api/admin/blocks'&&method==='POST'){

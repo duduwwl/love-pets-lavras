@@ -7,6 +7,8 @@ const formMessage = document.querySelector('#form-message');
 const submitButton = form.querySelector('button[type=submit]');
 let services = [];
 let selectedTime = '';
+let requestMode = false;
+let loadingTimes = 0;
 
 function durationText(minutes) {
   if (minutes < 60) return `${minutes} min`;
@@ -21,7 +23,7 @@ function showMessage(message, good = false) {
 }
 
 async function api(url, options) {
-  const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}${url}`, { credentials: 'same-origin', ...options });
+  const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}${url}`, { credentials: 'same-origin', signal: AbortSignal.timeout(10000), ...options });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'A agenda está indisponível no momento.');
   return data;
@@ -39,18 +41,21 @@ function renderServices() {
     const span = document.createElement('span');
     span.append(document.createTextNode(service.label));
     const small = document.createElement('small');
-    small.textContent = `Reserva de ${durationText(service.durationMinutes)}`;
+    small.textContent = `${requestMode ? 'Duração estimada' : 'Reserva'} de ${durationText(service.durationMinutes)}`;
     span.append(small); label.append(input, span); servicesElement.append(label);
   });
 }
 
 async function loadTimes() {
+  if (requestMode) return;
+  const attempt = ++loadingTimes;
   selectedTime = '';
   timesElement.replaceChildren();
   if (!dateElement.value || !selectedService()) { slotStatus.textContent = 'Selecione uma data para ver os horários.'; return; }
   slotStatus.textContent = 'Buscando horários livres...';
   try {
     const data = await api(`/api/availability?date=${encodeURIComponent(dateElement.value)}&service=${encodeURIComponent(selectedService())}`);
+    if (attempt !== loadingTimes) return;
     if (!data.slots.length) { slotStatus.textContent = 'Sem horários livres neste dia. Experimente outra data.'; return; }
     slotStatus.textContent = `${data.slots.length} ${data.slots.length === 1 ? 'horário disponível' : 'horários disponíveis'} · toque para escolher`;
     data.slots.forEach(time => {
@@ -61,7 +66,54 @@ async function loadTimes() {
       const span = document.createElement('span'); span.textContent = time;
       label.append(input, span); timesElement.append(label);
     });
-  } catch (error) { slotStatus.textContent = error.message; }
+  } catch (error) { if (attempt === loadingTimes) { slotStatus.textContent = error.message; enableRequestMode(); } }
+}
+
+function enableRequestMode() {
+  if (requestMode) return;
+  requestMode = true;
+  loadingTimes++;
+  if (!services.length) services = [{id:'banho',label:'Banho',durationMinutes:60},{id:'banho-tosa',label:'Banho e tosa',durationMinutes:120}];
+  const today = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const maximum = new Date(`${today}T12:00:00Z`); maximum.setUTCDate(maximum.getUTCDate()+45);
+  dateElement.min = today; dateElement.max = maximum.toISOString().slice(0,10);
+  const notice = document.createElement('p');
+  notice.className = 'availability-notice'; notice.setAttribute('role','status');
+  notice.textContent = 'A consulta automática de horários está temporariamente indisponível. Informe sua preferência e envie o pedido pelo WhatsApp. A equipe confirma a disponibilidade antes de reservar.';
+  form.prepend(notice);
+  document.querySelector('.booking-intro > p').textContent = 'Escolha o cuidado e indique o dia e o horário que prefere. Envie seu pedido pelo WhatsApp para a equipe confirmar a disponibilidade.';
+  document.querySelector('.card-head > p').textContent = 'Seu horário será combinado com a equipe pelo WhatsApp.';
+  document.querySelector('.intro-notice div span').textContent = 'Atendemos cães e gatos em Lavras. A equipe combina os detalhes do cuidado com você.';
+  document.querySelector('.form-footnote').textContent = 'O formulário prepara uma mensagem. O pedido só é enviado quando você confirmar no WhatsApp; a equipe confirma o horário.';
+  slotStatus.textContent = 'Qual horário você prefere? A disponibilidade será confirmada pela equipe.';
+  timesElement.setAttribute('aria-label','Preferência de horário');
+  timesElement.replaceChildren();
+  const label = document.createElement('label'); label.className = 'preferred-time';
+  label.textContent = 'Horário de preferência';
+  const input = document.createElement('input'); input.type = 'time'; input.name = 'time'; input.step = '1800'; input.required = true;
+  input.addEventListener('input', () => { selectedTime = input.value; });
+  label.append(input); timesElement.append(label);
+  submitButton.textContent = 'Preparar pedido pelo WhatsApp'; submitButton.disabled = false;
+  renderServices();
+}
+
+function prepareWhatsAppRequest(payload) {
+  const service = services.find(item => item.id === payload.service);
+  const dateLabel = new Intl.DateTimeFormat('pt-BR',{dateStyle:'full',timeZone:'UTC'}).format(new Date(`${payload.date}T12:00:00Z`));
+  const message = ['Olá, Love Pets! Gostaria de pedir um horário.','',`Serviço: ${service.label}`,`Pet: ${payload.petName} (${payload.petType === 'gato' ? 'gato' : 'cão'})`,`Tutor: ${payload.guardianName}`,`WhatsApp: ${payload.phone}`,`Preferência: ${dateLabel}, às ${payload.time}`,payload.email ? `E-mail: ${payload.email}` : '',payload.notes ? `Observações: ${payload.notes}` : '', '', 'Podem confirmar a disponibilidade?'].filter(Boolean).join('\n');
+  const success = document.querySelector('#booking-success');
+  success.querySelector('h2').textContent = 'Pedido pronto para enviar';
+  success.querySelector('.success-icon').textContent = '♡';
+  document.querySelector('#success-detail').textContent = `${payload.petName}: ${service.label}, ${dateLabel}, às ${payload.time}.`;
+  document.querySelector('#success-detail').nextElementSibling.textContent = 'Nenhuma reserva foi salva ou enviada ainda. Abra o WhatsApp, confira a mensagem e envie. A equipe confirma se o horário está disponível.';
+  document.querySelector('#calendar-download').hidden = true;
+  let link = document.querySelector('#whatsapp-request');
+  if (!link) {
+    link = document.createElement('a'); link.id = 'whatsapp-request'; link.className = 'submit-booking'; link.target = '_blank'; link.rel = 'noopener';
+    success.querySelector('.success-actions').prepend(link);
+  }
+  link.textContent = 'Enviar pedido pelo WhatsApp'; link.href = `https://wa.me/5535999146809?text=${encodeURIComponent(message)}`;
+  form.hidden = true; success.hidden = false; success.scrollIntoView({block:'start'});
 }
 
 dateElement.addEventListener('change', loadTimes);
@@ -70,11 +122,12 @@ form.addEventListener('submit', async event => {
   event.preventDefault();
   showMessage('');
   if (!form.reportValidity()) return;
-  if (!selectedTime) { showMessage('Escolha um dos horários disponíveis.'); timesElement.scrollIntoView({ block: 'center' }); return; }
+  if (!selectedTime) { showMessage(requestMode ? 'Informe o horário de preferência.' : 'Escolha um dos horários disponíveis.'); timesElement.scrollIntoView({ block: 'center' }); return; }
   const data = new FormData(form);
   const payload = Object.fromEntries(data.entries());
   payload.time = selectedTime;
   if (![10, 11].includes(String(payload.phone || '').replace(/\D/g, '').length)) { showMessage('Confira o WhatsApp com DDD.'); return; }
+  if (requestMode) { prepareWhatsAppRequest(payload); return; }
   submitButton.disabled = true;
   submitButton.firstChild.textContent = 'Enviando solicitação '; 
   try {
@@ -83,7 +136,17 @@ form.addEventListener('submit', async event => {
     document.querySelector('#booking-success').hidden = false;
     const dateLabel = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full', timeZone: 'UTC' }).format(new Date(`${booking.date}T12:00:00Z`));
     document.querySelector('#success-detail').textContent = `${payload.petName}: ${dateLabel}, às ${booking.time}.`;
-    document.querySelector('#calendar-download').href = `${window.LOVE_PETS_API_ORIGIN || ''}${booking.calendarUrl}`;
+    const calendarLink = document.querySelector('#calendar-download');
+    calendarLink.addEventListener('click', async event => {
+      event.preventDefault();
+      try {
+        const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}${booking.calendarUrl}`, {signal:AbortSignal.timeout(10000)});
+        if (!response.ok) throw new Error('Não foi possível baixar o calendário.');
+        const url = URL.createObjectURL(await response.blob());
+        const download = document.createElement('a'); download.href = url; download.download = 'love-pets-agendamento.ics'; download.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch { document.querySelector('#success-detail').textContent += ' O calendário está indisponível no momento.'; }
+    });
     document.querySelector('#booking-success').scrollIntoView({ block: 'start' });
   } catch (error) {
     showMessage(error.message);
@@ -95,14 +158,10 @@ form.addEventListener('submit', async event => {
 });
 
 api('/api/config').then(config => {
-  services = config.services;
+  services = config.services.filter(service => service.enabled !== false && service.id !== 'tosa');
   if (!services.length) throw new Error('Nenhum serviço está disponível para agendamento agora.');
   dateElement.min = config.today;
   dateElement.max = config.maxDate;
   renderServices();
   if (dateElement.value) loadTimes();
-}).catch(error => {
-  servicesElement.textContent = error.message;
-  slotStatus.textContent = 'Fale com a Love Pets pelo WhatsApp para escolher seu horário.';
-  submitButton.disabled = true;
-});
+}).catch(enableRequestMode);

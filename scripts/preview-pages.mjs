@@ -11,7 +11,7 @@ createServer((request,response)=>{
   const path=requested.pathname;
   if(path==='/__responsive'){
    const width=Number(requested.searchParams.get('width'))===820?820:390;
-   const route=['','produtos/','equipe/','admin/'].includes(requested.searchParams.get('route'))?requested.searchParams.get('route'):'';
+   const route=['','produtos/','agendar/','equipe/','admin/'].includes(requested.searchParams.get('route'))?requested.searchParams.get('route'):'';
    response.writeHead(200,{'content-type':mime['.html'],'cache-control':'no-store'});
    response.end(`<!doctype html><html><head><title>Prévia responsiva local</title><style>body{margin:0;background:#e8e2da}iframe{width:${width}px;height:880px;border:0;display:block;margin:12px auto}</style></head><body><iframe title="Prévia ${width}px" src="${base}${route}"></iframe></body></html>`);return;
   }

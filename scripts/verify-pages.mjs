@@ -7,6 +7,8 @@ const pages=['index.html','produtos/index.html','agendar/index.html','equipe/ind
 let references=0;
 for(const path of pages){
  const html=readFileSync(join(root,path),'utf8');
+ assert(!/(?:href|action)="[^"]*\.chatgpt\.site/.test(html),`${path}: navigation leaves GitHub Pages`);
+ assert(!html.includes('location.replace'),`${path}: unexpected redirect`);
  for(const [,value] of html.matchAll(/(?:href|src|action)="([^"]*)"/g)){
   if(!value.startsWith('/'))continue;
   assert(value.startsWith(base),`${path}: wrong base ${value}`);
@@ -21,8 +23,14 @@ assert(!home.includes('id="booking-form"'));
 assert(!home.includes('id="sobre"'));
 assert(!home.includes('hero-footnote'));
 assert(!home.includes('hero-bottom'));
-assert(home.includes('href="https://love-pets-lavras.duduwwl.chatgpt.site/agendar"'));
-assert(readFileSync(join(root,'agendar/index.html'),'utf8').includes('location.replace'));
+assert(home.includes(`href="${base}agendar/"`));
+assert(!home.includes('intro-mark'));
+assert(home.includes('class="contact-map"'));
+assert(home.includes('🐶')&&home.includes('🐱'));
+const booking=readFileSync(join(root,'agendar/index.html'),'utf8');
+assert(booking.includes('id="booking-form"'));
+assert(booking.includes('Nome do tutor'));
+assert(readFileSync(join(root,'booking.js'),'utf8').includes("service.id !== 'tosa'"));
 assert(readFileSync(join(root,'equipe/index.html'),'utf8').includes('value="lovepets-demo"'));
 assert(readFileSync(join(root,'admin/index.html'),'utf8').includes('demo-admin-data.js'));
 const products=JSON.parse(readFileSync(join(root,'products.json'),'utf8'));
@@ -36,4 +44,4 @@ for(const product of products){
 assert(!existsSync(join(root,'admin.html')));
 assert(!existsSync(join(root,'admin.js')));
 assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));
-console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, direct booking links, fictional admin demo.`);
+console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, internal booking form, fictional admin demo.`);

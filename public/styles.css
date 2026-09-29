@@ -137,3 +137,21 @@ h1,h2,.hero h1{letter-spacing:-.04em}
 @media(max-width:900px){.hero-inner{min-height:530px}.hero-media{height:500px}.hero h1{font-size:clamp(3rem,5.5vw,4.1rem)}.intro{display:grid;padding-block:65px}.intro>p{display:none}}
 @media(max-width:680px){.hero-copy{padding:45px 0 33px}.hero h1{font-size:clamp(2.75rem,10vw,4rem);margin:23px 0 29px}.hero-media{height:410px}.intro{grid-template-columns:88px minmax(0,1fr);gap:21px;padding-block:58px}.intro-mark{width:88px;height:88px}.intro h2{font-size:clamp(1.8rem,5.6vw,2.5rem);line-height:1.2}.intro .eyebrow{font-size:9px;letter-spacing:.1em;margin-bottom:12px}.hero:after{background-size:270px 315px;opacity:.075}}
 @media(max-width:390px){.hero-media{height:360px}.intro{gap:17px;grid-template-columns:77px minmax(0,1fr)}.intro-mark{width:77px;height:77px}}
+
+/* Delicate display type, with smaller titles and quieter spacing. */
+.hero-secondary{border-bottom:0;padding-bottom:0}
+.hero h1,#intro-title,#care-title{font-family:'Cormorant Garamond',Georgia,serif;font-weight:400;letter-spacing:-.022em;line-height:1.1}
+.hero h1{font-size:clamp(3.1rem,4.6vw,4.6rem);max-width:660px;margin:25px 0 32px}
+.hero h1 span{font-weight:400}
+.intro{grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:8vw;padding-block:75px}
+.intro h2{font-size:clamp(2.3rem,3.8vw,3.6rem);max-width:700px}
+.intro>p{grid-column:auto;max-width:330px;padding-left:28px}
+#care-title{font-size:clamp(2.5rem,4.3vw,4rem);max-width:730px}
+.care-pets{display:flex;align-items:center;justify-content:center;gap:18px;font-family:'Segoe UI Emoji','Apple Color Emoji',sans-serif;font-size:clamp(3.5rem,6vw,5.6rem);line-height:1.2;margin:12px 0 30px}
+.contact-inner{grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:45px;align-items:stretch}
+.contact-map{min-height:430px;overflow:hidden;border-radius:22px;background:#eadfd0}
+.contact-map iframe{display:block;width:100%;height:100%;min-height:430px;border:0}
+.contact-card{justify-content:center}
+.contact-card>div:first-child{border-top:0;padding-top:0}
+@media(max-width:900px){.hero h1{font-size:clamp(2.85rem,5.7vw,3.8rem)}.intro{grid-template-columns:1fr;padding-block:60px}.intro h2{font-size:3rem}.intro>p{display:none}#care-title{font-size:3.4rem}.contact-inner{grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:24px}.contact-card{padding:25px}.contact-map,.contact-map iframe{min-height:400px}.care-pets{gap:10px;font-size:4rem}}
+@media(max-width:680px){.hero h1{font-size:clamp(2.6rem,10.3vw,3.7rem);line-height:1.08;margin:20px 0 27px}.intro{display:block;padding-block:50px}.intro h2{font-size:2.45rem;max-width:480px}#care-title{font-size:2.8rem}.care-pets{font-size:4rem;justify-content:flex-start;margin:0 0 20px}.contact-inner{display:flex;flex-direction:column;gap:20px}.contact-map,.contact-map iframe{min-height:330px}.contact-card{padding:25px}.contact{padding-block:55px}}
