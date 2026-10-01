@@ -29,6 +29,13 @@
       "when": 1790890000000,
       "tag": "0003_taxydog",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790895000000,
+      "tag": "0004_real_catalog",
+      "breakpoints": true
     }
   ]
 }

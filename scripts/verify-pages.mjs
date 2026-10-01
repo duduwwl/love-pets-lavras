@@ -42,16 +42,19 @@ const admin=readFileSync(join(root,'admin/index.html'),'utf8');
 assert(admin.includes('url=https://love-pets-lavras.duduwwl.chatgpt.site/admin'));
 assert(!admin.includes('demo-admin-data.js'));
 const products=JSON.parse(readFileSync(join(root,'products.json'),'utf8'));
-assert.equal(products.length,22);
-const counts={mantinhas:4,roupinhas:4,caminhas:4,caes:5,gatos:5};
+assert.equal(products.length,27);
+const counts={higiene:14,petiscos:5,alimentacao:1,passeio:2,descanso:2,brinquedos:1,gatos:2};
 for(const [category,count] of Object.entries(counts))assert.equal(products.filter(p=>p.category===category).length,count);
+assert.equal(new Set(products.map(product=>product.image)).size,23);
 for(const product of products){
  for(const field of ['description','usage','selection','care'])assert(product[field]?.length>20,`${product.name}: missing ${field}`);
  assert.match(product.id,/^[0-9a-f-]{36}$/);
  assert(product.image.startsWith(base));assert(existsSync(join(root,product.image.slice(base.length))));
+ assert(product.price.includes('ilustrativo'));
+ assert.equal(product.illustrative,false);
 }
 assert(readFileSync(join(root,'products.js'),'utf8').includes("/api/products"));
 assert(!existsSync(join(root,'admin.html')));
 assert(!existsSync(join(root,'admin.js')));
 assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));
-console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, internal booking form, protected admin gateway.`);
+console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 27 photographed products, internal booking form, protected admin gateway.`);

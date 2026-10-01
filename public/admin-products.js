@@ -1,4 +1,13 @@
 const productDemo = !!window.LOVE_PETS_DEMO_API;
+const productCategories = {
+  higiene: 'Higiene e cuidados',
+  petiscos: 'Petiscos',
+  alimentacao: 'Alimentação',
+  passeio: 'Passeio e transporte',
+  descanso: 'Descanso',
+  brinquedos: 'Brinquedos',
+  gatos: 'Para gatos',
+};
 const productSection = document.createElement('section');
 productSection.className = 'admin-panel';
 productSection.id = 'produtos';
@@ -6,15 +15,15 @@ productSection.style.marginTop = '20px';
 productSection.innerHTML = `<div class="panel-heading"><div><span class="panel-kicker">LOJA</span><h2>Produtos da loja</h2></div></div>
   <p class="panel-help">${productDemo
     ? 'Esta é uma demonstração: os produtos salvos aparecem apenas neste navegador. Para publicar para todos, use o painel protegido da equipe.'
-    : 'Cadastre uma foto, detalhes e disponibilidade. Os produtos publicados aparecem na loja.'}</p>
+    : 'Os produtos fotografados estão cadastrados com preços ilustrativos e estoque a conferir. Atualize preço e quantidade aqui; novos produtos publicados aparecem na loja.'}</p>
   ${productDemo ? '<a class="return-link" href="https://love-pets-lavras.duduwwl.chatgpt.site/admin#produtos" target="_blank" rel="noopener">Abrir painel protegido para publicar</a>' : ''}
   <form id="product-form" class="product-form">
     <input type="hidden" name="productId">
     <label>Nome do produto<input name="name" required maxlength="100"></label>
-    <label>Categoria<select name="category"><option value="mantinhas">Mantinhas</option><option value="roupinhas">Roupinhas</option><option value="caminhas">Caminhas</option><option value="caes">Acessórios para cães</option><option value="gatos">Acessórios para gatos</option></select></label>
+    <label>Categoria<select name="category">${Object.entries(productCategories).map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></label>
     <label class="full">Descrição<textarea name="description" required maxlength="450"></textarea></label>
     <label>Preço<input name="price" required maxlength="40" placeholder="Ex.: R$ 49,90"></label>
-    <label>Quantidade em estoque<input name="stockQuantity" type="number" min="0" max="999999" step="1" required placeholder="Ex.: 5"></label>
+    <label>Quantidade em estoque<input name="stockQuantity" type="number" min="0" max="999999" step="1" placeholder="Informe quando souber"></label>
     <label>Foto do produto<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"><img id="product-preview" class="product-preview" hidden alt="Prévia da foto"></label>
     <label class="full"><input name="available" type="checkbox" checked style="display:inline;width:auto;min-height:0;margin:0 7px 0 0">Disponível para pedidos</label>
     <div class="full"><button class="admin-save" type="submit">${productDemo ? 'Salvar exemplo' : 'Publicar produto'}</button> <button id="cancel-product-edit" type="button" hidden>Cancelar edição</button></div>
@@ -67,7 +76,7 @@ function renderManagedProducts() {
     const photo = document.createElement('img'); photo.src = product.image; photo.alt = '';
     const info = document.createElement('div');
     const name = document.createElement('strong'); name.textContent = product.name;
-    const detail = document.createElement('span'); detail.textContent = `${product.category} · ${product.available ? 'Publicado' : 'Oculto'} · ${product.stockQuantity == null ? 'Estoque não informado' : `${product.stockQuantity} em estoque`}${product.price ? ' · ' + product.price : ''}`;
+    const detail = document.createElement('span'); detail.textContent = `${productCategories[product.category] || product.category} · ${product.available ? 'Publicado' : 'Oculto'} · ${product.stockQuantity == null ? 'Estoque não informado' : `${product.stockQuantity} em estoque`}${product.price ? ' · ' + product.price : ''}`;
     info.append(name, detail);
     const stock = document.createElement('div'); stock.className = 'stock-control';
     const stockLabel = document.createElement('label'); stockLabel.textContent = 'Estoque';
@@ -136,7 +145,8 @@ productForm.addEventListener('submit', async event => {
   if (!uploadedImage) { productTell('Escolha uma foto do produto.'); return; }
   const id = productForm.elements.productId.value;
   const body = Object.fromEntries(['name','category','description','price'].map(key => [key, productForm.elements[key].value.trim()]));
-  body.image = uploadedImage; body.available = productForm.elements.available.checked; body.stockQuantity = Number(productForm.elements.stockQuantity.value);
+  body.image = uploadedImage; body.available = productForm.elements.available.checked;
+  body.stockQuantity = productForm.elements.stockQuantity.value === '' ? null : Number(productForm.elements.stockQuantity.value);
   const button = productForm.querySelector('[type=submit]'); button.disabled = true;
   try {
     await productsApi(id ? `/api/admin/products/${id}` : '/api/admin/products', { method: id ? 'PUT' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });

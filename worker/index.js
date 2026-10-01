@@ -301,7 +301,7 @@ function calendarResponse(bookings, filename) {
   return new Response(lines.join('\r\n') + '\r\n', { headers: { 'content-type': 'text/calendar; charset=utf-8', 'content-disposition': `attachment; filename="${filename}"`, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' } });
 }
 
-const PRODUCT_CATEGORIES = new Set(['mantinhas', 'roupinhas', 'caminhas', 'caes', 'gatos']);
+const PRODUCT_CATEGORIES = new Set(['higiene', 'petiscos', 'alimentacao', 'passeio', 'descanso', 'brinquedos', 'gatos']);
 function productInput(body) {
   if (!body || !PRODUCT_CATEGORIES.has(body.category)) return null;
   const product = {
@@ -311,7 +311,7 @@ function productInput(body) {
     price: clean(body.price, 40), available: body.available !== false,
     stockQuantity: body.stockQuantity,
   };
-  if (!product.name || !product.description || !product.price || !Number.isInteger(product.stockQuantity) || product.stockQuantity < 0 || product.stockQuantity > 999999) return null;
+  if (!product.name || !product.description || !product.price || (product.stockQuantity !== null && (!Number.isInteger(product.stockQuantity) || product.stockQuantity < 0 || product.stockQuantity > 999999))) return null;
   return product;
 }
 
@@ -321,19 +321,21 @@ function productImageUrl(image, origin) {
 
 let catalogSeed;
 async function ensureCatalogSeeded(db) {
-  if (await first(db, 'SELECT key FROM catalog_bootstrap WHERE key = ?', 'original-catalog-v1')) return;
+  if (await first(db, 'SELECT key FROM catalog_bootstrap WHERE key = ?', 'real-catalog-v2')) return;
   if (!catalogSeed) {
     const encoded = STATIC_ASSETS['/products.json'].data;
     const bytes = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
     catalogSeed = JSON.parse(new TextDecoder().decode(bytes));
   }
-  const statements = catalogSeed.map(item => db.prepare(`INSERT OR IGNORE INTO shop_products
+  const oldIds = Array.from({ length: 22 }, (_, index) => `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`);
+  const statements = [db.prepare(`DELETE FROM shop_products WHERE id IN (${oldIds.map(() => '?').join(',')})`).bind(...oldIds)];
+  statements.push(...catalogSeed.map(item => db.prepare(`INSERT OR IGNORE INTO shop_products
     (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, illustrative, image_col, image_row, image_cols, image_rows)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
     item.id, item.name, item.category, item.description, item.usage, item.selection, item.care,
-    item.image, null, 1, null, 1, item.col, item.row, item.cols, item.rows,
-  ));
-  statements.push(db.prepare('INSERT OR IGNORE INTO catalog_bootstrap (key) VALUES (?)').bind('original-catalog-v1'));
+    item.image, item.price, 1, null, 0, null, null, null, null,
+  )));
+  statements.push(db.prepare('INSERT OR IGNORE INTO catalog_bootstrap (key) VALUES (?)').bind('real-catalog-v2'));
   await db.batch(statements);
 }
 

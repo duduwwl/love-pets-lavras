@@ -1,81 +1,149 @@
-const categoryLabels = { mantinhas: 'Mantinhas', roupinhas: 'Roupinhas', caminhas: 'Caminhas', caes: 'Acessórios para cães', gatos: 'Acessórios para gatos' };
-const tabs = [...document.querySelectorAll('.shop-tab')];
+const categoryLabels = {
+  higiene: 'Higiene e cuidados',
+  petiscos: 'Petiscos',
+  alimentacao: 'Alimentação',
+  passeio: 'Passeio e transporte',
+  descanso: 'Descanso',
+  brinquedos: 'Brinquedos',
+  gatos: 'Para gatos',
+};
+const controls = document.querySelector('#shop-controls');
+const search = document.querySelector('#product-search');
 const grid = document.querySelector('#product-grid');
 const dialog = document.querySelector('#product-dialog');
 let products = [];
-let currentCategory = 'mantinhas';
+let currentCategory = 'all';
 
 function setProductImage(element, product) {
   element.style.backgroundImage = `url("${product.image}")`;
-  element.style.backgroundSize = product.cols ? `${product.cols * 100}% ${product.rows * 100}%` : 'cover';
-  element.style.backgroundPosition = product.cols ? `${product.col / (product.cols - 1) * 100}% ${product.row / (product.rows - 1) * 100}%` : 'center';
-  element.setAttribute('aria-label', `${product.illustrative !== false ? 'Imagem ilustrativa' : 'Foto'} de ${product.name}`);
+  element.setAttribute('aria-label', `Foto de ${product.name} com fundo branco`);
 }
 
 function openProduct(product) {
-  dialog.querySelector('.dialog-category').textContent = product.categoryLabel;
+  dialog.querySelector('.dialog-category').textContent = categoryLabels[product.category] || product.categoryLabel || product.category;
   dialog.querySelector('#product-title').textContent = product.name;
   dialog.querySelector('.dialog-description').textContent = product.description;
   const details = dialog.querySelector('.dialog-details');
   details.replaceChildren();
-  for(const [label, text] of [['Para o dia a dia',product.usage],['Como escolher',product.selection],['Cuidados',product.care]]) {
-    if (!text) continue;
+  for (const [label, value] of [
+    ['Para o dia a dia', product.usage],
+    ['Como escolher', product.selection],
+    ['Cuidados', product.care],
+    ['Preço', product.price],
+    ['Estoque', product.stockQuantity == null ? 'Confirme com a loja' : product.stockQuantity ? `${product.stockQuantity} unidade${product.stockQuantity === 1 ? '' : 's'}` : 'Esgotado'],
+  ]) {
+    if (!value) continue;
     const row = document.createElement('div');
-    const term = document.createElement('dt'); term.textContent = label;
-    const value = document.createElement('dd'); value.textContent = text;
-    row.append(term,value); details.append(row);
+    const term = document.createElement('dt');
+    const description = document.createElement('dd');
+    term.textContent = label;
+    description.textContent = value;
+    row.append(term, description);
+    details.append(row);
   }
-  if (product.price) { const row = document.createElement('div'); const term = document.createElement('dt'); term.textContent = 'Preço'; const value = document.createElement('dd'); value.textContent = product.price; row.append(term, value); details.append(row); }
-  if (product.stockQuantity != null) { const row = document.createElement('div'); const term = document.createElement('dt'); term.textContent = 'Estoque'; const value = document.createElement('dd'); value.textContent = product.stockQuantity ? `${product.stockQuantity} unidade${product.stockQuantity === 1 ? '' : 's'}` : 'Esgotado'; row.append(term, value); details.append(row); }
-  dialog.querySelector('.dialog-note').textContent = product.illustrative !== false ? 'Imagem ilustrativa de referência. Confirme modelo, medidas e cores com a equipe.' : 'Foto enviada pela loja. Confirme tamanhos e cores antes de concluir o pedido.';
+  dialog.querySelector('.dialog-note').textContent = product.price?.includes('ilustrativo')
+    ? 'Foto do produto enviada pela loja, com fundo padronizado. Este preço é apenas um exemplo; confirme o valor atual e a disponibilidade.'
+    : 'Foto do produto enviada pela loja, com fundo padronizado. Confirme variações e disponibilidade.';
   setProductImage(dialog.querySelector('.dialog-visual'), product);
-  const message = product.stockQuantity === 0 ? `Olá! Gostaria de saber quando ${product.name} estará disponível novamente na Love Pets.` : `Olá! Quero pedir ${product.name} na Love Pets. Podem confirmar os modelos disponíveis, as medidas ou tamanhos, as cores, o preço e como retirar?`;
+  const message = product.stockQuantity === 0
+    ? `Olá! Gostaria de saber quando ${product.name} estará disponível novamente na Love Pets.`
+    : `Olá, Love Pets! Tenho interesse em ${product.name}. Podem confirmar o preço atual, a variação disponível e como retirar?`;
   dialog.querySelector('.dialog-whatsapp').href = `https://wa.me/5535999146809?text=${encodeURIComponent(message)}`;
   dialog.showModal();
 }
 
+function matchingProducts() {
+  const query = search.value.trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return products.filter(product => {
+    if (currentCategory !== 'all' && product.category !== currentCategory) return false;
+    if (!query) return true;
+    const text = [product.name, product.description, categoryLabels[product.category] || product.category]
+      .join(' ').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return text.includes(query);
+  });
+}
+
 function renderProducts() {
+  const visible = matchingProducts();
+  document.querySelector('#current-category').textContent = currentCategory === 'all' ? 'Todos os produtos' : categoryLabels[currentCategory] || currentCategory;
+  document.querySelector('#product-count').textContent = `${visible.length} produto${visible.length === 1 ? '' : 's'}`;
+  for (const button of controls.querySelectorAll('.shop-tab')) {
+    const active = button.dataset.category === currentCategory;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  }
   grid.replaceChildren();
-  document.querySelector('#current-category').textContent = categoryLabels[currentCategory];
-  for(const product of products.filter(item=>item.category===currentCategory)) {
-    const card=document.createElement('article'); card.className='product-card';
-    const photo=document.createElement('div'); photo.className='product-photo'; photo.setAttribute('role','img'); setProductImage(photo,product);
-    const info=document.createElement('div'); info.className='product-info';
-    const label=document.createElement('small'); label.textContent=product.categoryLabel;
-    const title=document.createElement('h3'); title.textContent=product.name;
-    const summary=document.createElement('p'); summary.className='product-summary'; summary.textContent=product.description;
-    const stock=document.createElement('small'); stock.className='product-stock'; stock.textContent=product.stockQuantity == null ? 'Disponibilidade a confirmar' : product.stockQuantity === 0 ? 'Esgotado' : `${product.stockQuantity} em estoque`;
-    const button=document.createElement('button'); button.type='button'; button.textContent='Ver opção';
-    button.setAttribute('aria-label',`Ver opção: ${product.name}`); button.addEventListener('click',()=>openProduct(product));
-    info.append(label,title,summary,stock,button); card.append(photo,info); grid.append(card);
+  if (!visible.length) {
+    const empty = document.createElement('p');
+    empty.className = 'shop-empty';
+    empty.textContent = 'Nenhum produto encontrado. Tente outro termo ou categoria.';
+    grid.append(empty);
+    return;
+  }
+  for (const product of visible) {
+    const card = document.createElement('article');
+    card.className = 'product-card';
+    const photo = document.createElement('div');
+    photo.className = 'product-photo';
+    photo.setAttribute('role', 'img');
+    setProductImage(photo, product);
+    const info = document.createElement('div');
+    info.className = 'product-info';
+    const label = document.createElement('small');
+    label.textContent = categoryLabels[product.category] || product.categoryLabel || product.category;
+    const title = document.createElement('h3');
+    title.textContent = product.name;
+    const summary = document.createElement('p');
+    summary.className = 'product-summary';
+    summary.textContent = product.description;
+    const price = document.createElement('strong');
+    price.className = 'product-price';
+    price.textContent = product.price || 'Preço sob consulta';
+    const stock = document.createElement('small');
+    stock.className = 'product-stock';
+    stock.textContent = product.stockQuantity == null ? 'Disponibilidade a confirmar' : product.stockQuantity === 0 ? 'Esgotado' : `${product.stockQuantity} em estoque`;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Ver detalhes';
+    button.setAttribute('aria-label', `Ver detalhes: ${product.name}`);
+    button.addEventListener('click', () => openProduct(product));
+    info.append(label, title, summary, price, stock, button);
+    card.append(photo, info);
+    grid.append(card);
   }
 }
 
-function selectTab(tab) {
- currentCategory=tab.dataset.category;
- tabs.forEach(item=>{const selected=item===tab;item.classList.toggle('active',selected);item.setAttribute('aria-selected',String(selected));item.tabIndex=selected?0:-1;});
- renderProducts();
- tab.scrollIntoView({block:'nearest',inline:'nearest'});
+function renderCategories() {
+  controls.replaceChildren();
+  const activeCategories = Object.keys(categoryLabels).filter(category => products.some(product => product.category === category));
+  for (const category of [...new Set(['all', ...activeCategories, ...products.map(product => product.category)])]) {
+    const button = document.createElement('button');
+    button.className = 'shop-tab';
+    button.type = 'button';
+    button.dataset.category = category;
+    const label = category === 'all' ? 'Todos' : categoryLabels[category] || category;
+    const count = category === 'all' ? products.length : products.filter(product => product.category === category).length;
+    button.append(document.createTextNode(label + ' '));
+    const small = document.createElement('small');
+    small.textContent = String(count).padStart(2, '0');
+    button.append(small);
+    button.addEventListener('click', () => { currentCategory = category; renderProducts(); });
+    controls.append(button);
+  }
 }
-tabs.forEach((tab,index)=>{
- tab.tabIndex=index===0?0:-1;
- tab.addEventListener('click',()=>selectTab(tab));
- tab.addEventListener('keydown',event=>{
-  if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
-  event.preventDefault();
-  const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
-  selectTab(tabs[next]);tabs[next].focus();
- });
-});
-dialog.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
-dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
-fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(10000) })
+
+search.addEventListener('input', renderProducts);
+dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
+dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+
+fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(10000), cache: 'no-store' })
   .then(response => { if (!response.ok) throw new Error('live products'); return response.json(); })
   .then(data => { if (!Array.isArray(data.products)) throw new Error('live products'); return data.products; })
   .catch(() => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`).then(response => { if (!response.ok) throw new Error('products'); return response.json(); }))
   .then(items => {
-  products = items.map(item => ({ ...item, categoryLabel: categoryLabels[item.category] }));
-  if (!products.length) { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; return; }
-  tabs.forEach(tab => { const count = products.filter(item => item.category === tab.dataset.category).length; tab.querySelector('small').textContent = String(count).padStart(2, '0'); });
-  renderProducts();
-}).catch(() => { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; });
+    products = items.map(item => ({ ...item, categoryLabel: categoryLabels[item.category] || item.categoryLabel }));
+    if (!products.length) { grid.textContent = 'Nenhum produto disponível no momento. Fale com a Love Pets pelo WhatsApp.'; return; }
+    renderCategories();
+    renderProducts();
+  })
+  .catch(() => { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; });
