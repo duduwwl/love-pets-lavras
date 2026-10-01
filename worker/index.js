@@ -316,7 +316,26 @@ function productImageUrl(image, origin) {
   return image.startsWith('products/') ? `${origin}/api/product-images/${image.slice('products/'.length)}` : image.startsWith('/') ? `${origin}${image}` : image;
 }
 
+let catalogSeed;
+async function ensureCatalogSeeded(db) {
+  if (await first(db, 'SELECT key FROM catalog_bootstrap WHERE key = ?', 'original-catalog-v1')) return;
+  if (!catalogSeed) {
+    const encoded = STATIC_ASSETS['/products.json'].data;
+    const bytes = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
+    catalogSeed = JSON.parse(new TextDecoder().decode(bytes));
+  }
+  const statements = catalogSeed.map(item => db.prepare(`INSERT OR IGNORE INTO shop_products
+    (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, illustrative, image_col, image_row, image_cols, image_rows)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+    item.id, item.name, item.category, item.description, item.usage, item.selection, item.care,
+    item.image, null, 1, null, 1, item.col, item.row, item.cols, item.rows,
+  ));
+  statements.push(db.prepare('INSERT OR IGNORE INTO catalog_bootstrap (key) VALUES (?)').bind('original-catalog-v1'));
+  await db.batch(statements);
+}
+
 async function listShopProducts(db, origin, includeUnavailable = false) {
+  await ensureCatalogSeeded(db);
   const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available, stock_quantity, illustrative, image_col, image_row, image_cols, image_rows
     FROM shop_products ${includeUnavailable ? '' : 'WHERE available = 1'} ORDER BY created_at DESC`;
   return (await rows(db, sql)).map(item => ({

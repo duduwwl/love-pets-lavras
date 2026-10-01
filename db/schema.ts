@@ -76,3 +76,8 @@ export const shopProducts = sqliteTable("shop_products", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const catalogBootstrap = sqliteTable("catalog_bootstrap", {
+  key: text("key").primaryKey(),
+  appliedAt: text("applied_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
