@@ -109,12 +109,12 @@
     "care": "Conserve fechado em local seco e ofereça água fresca ao pet.",
     "price": "R$ 9,90 · ilustrativo",
     "stockQuantity": null,
+    "illustrative": false,
     "flavors": [
       "Maçã",
       "Manga",
       "Morango"
-    ],
-    "illustrative": false
+    ]
   },
   {
     "id": "10000000-0000-4000-8000-000000000011",
@@ -163,7 +163,7 @@
     "name": "Mantinhas de fleece Love Pets",
     "category": "descanso",
     "categoryLabel": "Descanso",
-    "image": "/love-pets-lavras/assets/products/mantinhas.jpg",
+    "image": "/love-pets-lavras/assets/products/mantinhas-enquadradas.jpg",
     "description": "Mantinhas de fleece da Love Pets em estampas e cores variadas.",
     "usage": "Para deixar caminhas e cantinhos de descanso mais aconchegantes.",
     "selection": "Confirme medida, estampa e tecido disponíveis antes do pedido.",
@@ -303,7 +303,7 @@
     "name": "Pet Clean Shampoo Filhote 700 ml",
     "category": "higiene",
     "categoryLabel": "Higiene e cuidados",
-    "image": "/love-pets-lavras/assets/products/shampoo.jpg",
+    "image": "/love-pets-lavras/assets/products/shampoo-filhote.jpg",
     "description": "Shampoo e condicionador Pet Clean Filhote, frasco verde de 700 ml.",
     "usage": "Para o banho conforme a orientação do rótulo.",
     "selection": "Confira idade, tipo de pelagem e ingredientes antes de escolher.",
@@ -317,7 +317,7 @@
     "name": "Pet Clean Shampoo 5 em 1 700 ml",
     "category": "higiene",
     "categoryLabel": "Higiene e cuidados",
-    "image": "/love-pets-lavras/assets/products/shampoo.jpg",
+    "image": "/love-pets-lavras/assets/products/shampoo-5-em-1.jpg",
     "description": "Shampoo e condicionador Pet Clean 5 em 1, frasco roxo de 700 ml.",
     "usage": "Para o banho conforme a orientação do rótulo.",
     "selection": "Confira a indicação para a pelagem do pet antes de usar.",
@@ -331,7 +331,7 @@
     "name": "Pet Clean Shampoo Neutro 700 ml",
     "category": "higiene",
     "categoryLabel": "Higiene e cuidados",
-    "image": "/love-pets-lavras/assets/products/shampoo.jpg",
+    "image": "/love-pets-lavras/assets/products/shampoo-neutro.jpg",
     "description": "Shampoo e condicionador Pet Clean Neutro, frasco azul de 700 ml.",
     "usage": "Para o banho conforme a orientação do rótulo.",
     "selection": "Confira a indicação para o tipo de pelo e pele do pet.",

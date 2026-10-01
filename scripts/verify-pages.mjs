@@ -45,7 +45,10 @@ const products=JSON.parse(readFileSync(join(root,'products.json'),'utf8'));
 assert.equal(products.length,25);
 const counts={higiene:14,petiscos:3,alimentacao:1,passeio:2,descanso:2,brinquedos:1,gatos:2};
 for(const [category,count] of Object.entries(counts))assert.equal(products.filter(p=>p.category===category).length,count);
-assert.equal(new Set(products.map(product=>product.image)).size,23);
+assert.equal(new Set(products.map(product=>product.image)).size,25);
+for(const [id,filename] of [['14','mantinhas-enquadradas.jpg'],['24','shampoo-filhote.jpg'],['25','shampoo-5-em-1.jpg'],['26','shampoo-neutro.jpg']]){
+ assert.equal(products.find(product=>product.id.endsWith(id.padStart(12,'0')))?.image,`${base}assets/products/${filename}`);
+}
 assert.deepEqual(products.find(product=>product.id.endsWith('000000000008'))?.flavors,['Maçã','Manga','Morango']);
 assert.equal(products.filter(product=>product.name.startsWith('OneByOne Fit')).length,1);
 for(const product of products){
