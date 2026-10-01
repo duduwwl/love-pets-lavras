@@ -24,7 +24,13 @@ const db = {
     catch (error) { sqlite.exec('ROLLBACK'); throw error; }
   },
 };
-const env = { DB: db, ADMIN_EMAILS: 'admin@example.com', CALENDAR_FEED_TOKEN: 'test-feed-secret' };
+const storedPhotos = new Map();
+const bucket = {
+  async put(key, value) { storedPhotos.set(key, value); },
+  async get(key) { return storedPhotos.has(key) ? { body: new Response(storedPhotos.get(key)).body } : null; },
+  async delete(key) { storedPhotos.delete(key); },
+};
+const env = { DB: db, BUCKET: bucket, ADMIN_EMAILS: 'admin@example.com', CALENDAR_FEED_TOKEN: 'test-feed-secret' };
 const origin = 'https://love-pets-lavras.example';
 const adminHeaders = { 'oai-authenticated-user-id': 'owner', 'oai-authenticated-user-email': 'admin@example.com', origin };
 async function call(path, { method = 'GET', body, headers = {} } = {}) {
@@ -102,10 +108,20 @@ const createdProduct = await data(await call('/api/admin/products', { method:'PO
 assert.match(createdProduct.id,/^[0-9a-f-]{36}$/);
 assert.equal((await data(await crossOrigin('/api/products'))).products.length,1);
 assert.equal((await crossOrigin('/api/products')).headers.get('access-control-allow-origin'),pagesOrigin);
-assert.equal((await call(`/api/admin/products/${createdProduct.id}`, { method:'PUT',headers:adminHeaders,body:{...product,available:false} })).status,200);
+const publicProduct = (await data(await call('/api/products'))).products[0];
+assert.match(publicProduct.image, /\/api\/product-images\/[0-9a-f-]{36}\.webp$/);
+assert.equal((await call(new URL(publicProduct.image).pathname)).headers.get('content-type'),'image/webp');
+assert.equal(storedPhotos.size,1);
+assert.equal((await call(`/api/admin/products/${createdProduct.id}`, { method:'PUT',headers:adminHeaders,body:product })).status,200);
+const replacedProduct = (await data(await call('/api/products'))).products[0];
+assert.notEqual(replacedProduct.image, publicProduct.image);
+assert.equal((await call(new URL(publicProduct.image).pathname)).status,404);
+assert.equal((await call(`/api/admin/products/${createdProduct.id}`, { method:'PUT',headers:adminHeaders,body:{...product,image:replacedProduct.image,available:false} })).status,200);
+assert.equal(storedPhotos.size,1);
 assert.equal((await data(await call('/api/products'))).products.length,0);
 assert.equal((await data(await call('/api/admin/products', {headers:adminHeaders}))).products.length,1);
 assert.equal((await call(`/api/admin/products/${createdProduct.id}`, {method:'DELETE',headers:adminHeaders})).status,200);
+assert.equal(storedPhotos.size,0);
 const nextDate = new Date(`${date}T12:00:00Z`);nextDate.setUTCDate(nextDate.getUTCDate()+1);
 const pagesBooking={...booking,date:nextDate.toISOString().slice(0,10),phone:'35988887777'};
 assert.equal((await crossOrigin('/api/appointments','POST',pagesBooking,'https://untrusted.example')).status,403);

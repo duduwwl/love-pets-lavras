@@ -126,7 +126,8 @@ function sameOrigin(request) {
 // Only the public booking endpoints are available to the GitHub Pages frontend.
 const PUBLIC_BOOKING_ORIGINS = new Set(['https://duduwwl.github.io']);
 function publicBookingPath(path) {
-  return ['/api/config', '/api/availability', '/api/appointments', '/api/products'].includes(path) || /^\/api\/appointments\/[0-9a-f-]{36}\.ics$/.test(path);
+  return ['/api/config', '/api/availability', '/api/appointments', '/api/products'].includes(path) ||
+    /^\/api\/appointments\/[0-9a-f-]{36}\.ics$/.test(path) || /^\/api\/product-images\/[0-9a-f-]{36}\.webp$/.test(path);
 }
 function bookingOriginAllowed(request) {
   return sameOrigin(request) || PUBLIC_BOOKING_ORIGINS.has(request.headers.get('origin'));
@@ -297,15 +298,6 @@ function calendarResponse(bookings, filename) {
   return new Response(lines.join('\r\n') + '\r\n', { headers: { 'content-type': 'text/calendar; charset=utf-8', 'content-disposition': `attachment; filename="${filename}"`, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' } });
 }
 
-async function ensureShopProducts(db) {
-  await db.prepare(`CREATE TABLE IF NOT EXISTS shop_products (
-    id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL,
-    description TEXT NOT NULL, usage TEXT NOT NULL, selection TEXT NOT NULL,
-    care TEXT NOT NULL, image TEXT NOT NULL, price TEXT, available INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )`).run();
-}
-
 const PRODUCT_CATEGORIES = new Set(['mantinhas', 'roupinhas', 'caminhas', 'caes', 'gatos']);
 function productInput(body) {
   if (!body || !PRODUCT_CATEGORIES.has(body.category)) return null;
@@ -314,33 +306,53 @@ function productInput(body) {
     description: clean(body.description, 450), usage: clean(body.usage, 300),
     selection: clean(body.selection, 300), care: clean(body.care, 300),
     price: clean(body.price, 40) || null, available: body.available !== false,
-    image: body.image,
   };
-  if (!product.name || !product.description || !product.usage || !product.selection || !product.care ||
-      typeof product.image !== 'string' || product.image.length > 360000 ||
-      !/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(product.image)) return null;
+  if (!product.name || !product.description || !product.usage || !product.selection || !product.care) return null;
   return product;
 }
 
-async function listShopProducts(db, includeUnavailable = false) {
-  await ensureShopProducts(db);
-  const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available
-    FROM shop_products ${includeUnavailable ? '' : 'WHERE available = 1'} ORDER BY created_at DESC`;
-  return (await rows(db, sql)).map(item => ({ ...item, available: !!item.available }));
+function productImageUrl(image, origin) {
+  return image.startsWith('products/') ? `${origin}/api/product-images/${image.slice('products/'.length)}` : image;
 }
 
-async function writeShopProduct(db, request, id = crypto.randomUUID()) {
+async function listShopProducts(db, origin, includeUnavailable = false) {
+  const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available
+    FROM shop_products ${includeUnavailable ? '' : 'WHERE available = 1'} ORDER BY created_at DESC`;
+  return (await rows(db, sql)).map(item => ({ ...item, image: productImageUrl(item.image, origin), available: !!item.available }));
+}
+
+async function writeShopProduct(db, bucket, request, id = crypto.randomUUID()) {
   let body;
   try { body = await readBody(request, 370000); } catch { return fail('Foto ou dados inválidos. Use uma imagem menor.'); }
   const product = productInput(body);
-  if (!product) return fail('Preencha os dados do produto e envie uma foto JPG, PNG ou WebP de até 250 KB.');
-  const values = [product.name, product.category, product.description, product.usage, product.selection, product.care, product.image, product.price, product.available ? 1 : 0];
-  if (request.method === 'POST') {
-    await db.prepare('INSERT INTO shop_products (id, name, category, description, usage, selection, care, image, price, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, ...values).run();
-    return json({ id, ok: true }, 201);
+  if (!product) return fail('Preencha os dados do produto.');
+  const origin = new URL(request.url).origin;
+  const existing = request.method === 'PUT' ? await first(db, 'SELECT image FROM shop_products WHERE id = ?', id) : null;
+  if (request.method === 'PUT' && !existing) return fail('Produto não encontrado.', 404);
+  let image = existing?.image;
+  let uploadedKey = null;
+  if (typeof body.image === 'string' && /^data:image\/webp;base64,[A-Za-z0-9+/]+={0,2}$/.test(body.image) && body.image.length <= 350000) {
+    const binary = atob(body.image.slice('data:image/webp;base64,'.length));
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+    uploadedKey = `products/${crypto.randomUUID()}.webp`;
+    await bucket.put(uploadedKey, bytes, { httpMetadata: { contentType: 'image/webp' } });
+    image = uploadedKey;
+  } else if (!existing || body.image !== productImageUrl(existing.image, origin)) {
+    return fail('Envie uma foto WebP válida de até 250 KB.');
   }
-  const result = await db.prepare('UPDATE shop_products SET name = ?, category = ?, description = ?, usage = ?, selection = ?, care = ?, image = ?, price = ?, available = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(...values, id).run();
-  return result.meta?.changes ? json({ id, ok: true }) : fail('Produto não encontrado.', 404);
+  const values = [product.name, product.category, product.description, product.usage, product.selection, product.care, image, product.price, product.available ? 1 : 0];
+  try {
+    if (request.method === 'POST') {
+      await db.prepare('INSERT INTO shop_products (id, name, category, description, usage, selection, care, image, price, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, ...values).run();
+    } else {
+      await db.prepare('UPDATE shop_products SET name = ?, category = ?, description = ?, usage = ?, selection = ?, care = ?, image = ?, price = ?, available = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(...values, id).run();
+    }
+  } catch (error) {
+    if (uploadedKey) await bucket.delete(uploadedKey).catch(() => {});
+    throw error;
+  }
+  if (uploadedKey && existing?.image.startsWith('products/')) await bucket.delete(existing.image).catch(error => console.error('Old product photo cleanup failed', error));
+  return json({ id, ok: true }, request.method === 'POST' ? 201 : 200);
 }
 
 async function api(request, env, path) {
@@ -348,7 +360,13 @@ async function api(request, env, path) {
   const db = env.DB;
   const url = new URL(request.url);
   if (path === '/api/config' && request.method === 'GET') return json({ services: (await services(db)).filter(s => s.enabled && s.id !== 'tosa'), today: localNow().date, maxDate: dayOffset(localNow().date, MAX_DAYS), timezone: ZONE });
-  if (path === '/api/products' && request.method === 'GET') return json({ products: await listShopProducts(db) });
+  if (path === '/api/products' && request.method === 'GET') return json({ products: await listShopProducts(db, url.origin) });
+  const productImage = path.match(/^\/api\/product-images\/([0-9a-f-]{36})\.webp$/);
+  if (productImage && request.method === 'GET') {
+    if (!env.BUCKET) return fail('Fotos temporariamente indisponíveis.', 503);
+    const object = await env.BUCKET.get(`products/${productImage[1]}.webp`);
+    return object ? new Response(object.body, { headers: { 'content-type': 'image/webp', 'cache-control': 'public, max-age=31536000, immutable', 'x-content-type-options': 'nosniff' } }) : fail('Foto não encontrada.', 404);
+  }
   if (path === '/api/availability' && request.method === 'GET') {
     const result = await availability(db, url.searchParams.get('date'), url.searchParams.get('service'));
     return result ? json(result) : fail('Serviço inválido.');
@@ -370,11 +388,17 @@ async function api(request, env, path) {
   if (denied) return denied;
   if (!['GET', 'HEAD'].includes(request.method) && !sameOrigin(request)) return fail('Origem não permitida.', 403);
   if (path === '/api/admin/state' && request.method === 'GET') return adminState(db, request);
-  if (path === '/api/admin/products' && request.method === 'GET') return json({ products: await listShopProducts(db, true) });
-  if (path === '/api/admin/products' && request.method === 'POST') { await ensureShopProducts(db); return writeShopProduct(db, request); }
+  if (path === '/api/admin/products' && request.method === 'GET') return json({ products: await listShopProducts(db, url.origin, true) });
+  if (path === '/api/admin/products' && request.method === 'POST') return env.BUCKET ? writeShopProduct(db, env.BUCKET, request) : fail('Fotos temporariamente indisponíveis.', 503);
   const shopProduct = path.match(/^\/api\/admin\/products\/([0-9a-f-]{36})$/);
-  if (shopProduct && request.method === 'PUT') { await ensureShopProducts(db); return writeShopProduct(db, request, shopProduct[1]); }
-  if (shopProduct && request.method === 'DELETE') { await ensureShopProducts(db); const result = await db.prepare('DELETE FROM shop_products WHERE id = ?').bind(shopProduct[1]).run(); return result.meta?.changes ? json({ ok: true }) : fail('Produto não encontrado.', 404); }
+  if (shopProduct && request.method === 'PUT') return env.BUCKET ? writeShopProduct(db, env.BUCKET, request, shopProduct[1]) : fail('Fotos temporariamente indisponíveis.', 503);
+  if (shopProduct && request.method === 'DELETE') {
+    const existing = await first(db, 'SELECT image FROM shop_products WHERE id = ?', shopProduct[1]);
+    if (!existing) return fail('Produto não encontrado.', 404);
+    await db.prepare('DELETE FROM shop_products WHERE id = ?').bind(shopProduct[1]).run();
+    if (env.BUCKET && existing.image.startsWith('products/')) await env.BUCKET.delete(existing.image).catch(error => console.error('Product photo cleanup failed', error));
+    return json({ ok: true });
+  }
   if (path === '/api/admin/calendar-url' && request.method === 'GET') return env.CALENDAR_FEED_TOKEN ? json({ url: `${url.origin}/api/calendar.ics?token=${encodeURIComponent(env.CALENDAR_FEED_TOKEN)}` }) : fail('Calendário externo não configurado.', 503);
   if (path === '/api/admin/hours' && request.method === 'PUT') return saveHours(db, request);
   if (path === '/api/admin/services' && request.method === 'PUT') return saveServices(db, request);
