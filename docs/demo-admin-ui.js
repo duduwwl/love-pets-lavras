@@ -100,7 +100,7 @@ function renderHours() {
 
 function renderServices() {
   servicesList.replaceChildren();
-  state.services.forEach(service => {
+  state.services.filter(service => service.id !== 'tosa').forEach(service => {
     const row = document.createElement('div'); row.className = 'service-row'; row.dataset.id = service.id; row.dataset.label = service.label;
     row.dataset.enabled = String(service.enabled);
     const label = document.createElement('span'); label.className = 'service-name'; label.textContent = service.label;
@@ -149,7 +149,10 @@ document.querySelector('#hours-form').addEventListener('submit', async event => 
 
 document.querySelector('#services-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const services = [...servicesList.querySelectorAll('.service-row')].map(row => ({ id: row.dataset.id, label: row.dataset.label, enabled: row.dataset.enabled === 'true', durationMinutes: Number(row.querySelector('[name=durationMinutes]').value) }));
+  const services = state.services.map(service => {
+    const row = [...servicesList.querySelectorAll('.service-row')].find(item => item.dataset.id === service.id);
+    return row ? { id: row.dataset.id, label: row.dataset.label, enabled: row.dataset.enabled === 'true', durationMinutes: Number(row.querySelector('[name=durationMinutes]').value) } : { ...service, enabled: false };
+  });
   try { await apiWrite('/api/admin/services', 'PUT', { services }); tell('Duração dos serviços salva.', true); await loadState(); }
   catch (error) { tell(error.message); }
 });
