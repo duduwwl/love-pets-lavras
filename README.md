@@ -9,7 +9,7 @@
 - Painel protegido: https://love-pets-lavras.duduwwl.chatgpt.site/admin
 - Repositório: https://github.com/duduwwl/love-pets-lavras
 
-A página inicial não contém o catálogo nem o formulário de reservas. O catálogo tem página própria e reúne 27 itens das 23 fotos fornecidas, com descrições, preços de exemplo, busca e filtros por categoria. O botão **Pedir pelo WhatsApp** abre uma mensagem com o produto selecionado; o envio depende do cliente. Todos os botões de agendamento abrem diretamente o formulário em `/agendar/` no GitHub Pages. A entrada da equipe abre o painel protegido no serviço da agenda.
+A página inicial não contém o catálogo nem o formulário de reservas. O catálogo tem página própria e reúne 25 itens das 23 fotos fornecidas, com descrições, preços de exemplo, busca e filtros por categoria. Os três sabores OneByOne Fit aparecem em um único produto, com escolha de sabor nos detalhes e no pedido pelo WhatsApp. Todos os botões de agendamento abrem diretamente o formulário em `/agendar/` no GitHub Pages. A entrada da equipe abre o painel protegido no serviço da agenda.
 
 A landing page destaca a fachada real da loja logo após a abertura e apresenta o Taxydog com a foto do veículo. O botão **Agendar com Taxydog** abre o formulário com a opção de buscar e levar o pet já selecionada. O cliente informa o endereço; a equipe confirma a disponibilidade do transporte e o valor pelo WhatsApp. O Taxydog é solicitado junto com Banho ou Banho e tosa.
 
@@ -19,7 +19,7 @@ O GitHub Pages publica os arquivos de `docs/` da branch `main`. Execute `node sc
 
 **Administração real:** `/equipe/` mantém a senha ilustrativa `lovepets-demo` já preenchida, conforme solicitado. Ela não autentica nem protege dados. Ao entrar, `/admin/` encaminha para o painel protegido do serviço da agenda. A conta autorizada é exigida ali. Esse painel mostra as reservas reais, permite confirmar horários e gerenciar produtos. O GitHub Pages não recebe os dados privados da equipe.
 
-**Produtos e estoque:** A aba **Produtos da loja** no painel protegido lista os 27 itens fotografados e permite editar preços e quantidades. Os preços estão explicitamente marcados como ilustrativos; o estoque inicial fica sem número até a equipe conferir. Novos produtos exigem nome, categoria, descrição, preço e foto; a quantidade pode ser informada depois. Um membro autorizado pode publicar, editar, ocultar ou excluir. Fotos novas são reduzidas para WebP no navegador e guardadas no R2; os dados e quantidades ficam no D1. A migração `0004_real_catalog.sql` remove apenas os 22 itens fictícios iniciais e cadastra os novos, preservando produtos adicionados pela equipe. O catálogo público consulta `/api/products` e mostra o estoque atualizado; `products.json` serve apenas como reserva se a API estiver indisponível.
+**Produtos e estoque:** A aba **Produtos da loja** no painel protegido lista os 25 itens fotografados e permite editar preços, quantidades e sabores. Os preços estão explicitamente marcados como ilustrativos; o estoque inicial fica sem número até a equipe conferir. Novos produtos exigem nome, categoria, descrição, preço e foto; a quantidade pode ser informada depois. Um membro autorizado pode publicar, editar, ocultar ou excluir. Fotos novas são reduzidas para WebP no navegador e guardadas no R2; os dados e quantidades ficam no D1. A migração `0004_real_catalog.sql` remove apenas os 22 itens fictícios iniciais e cadastra os novos, preservando produtos adicionados pela equipe. A migração `0005_product_flavors.sql` reúne as três entradas OneByOne Fit em uma só e adiciona sabores aos produtos. O catálogo público consulta `/api/products` e mostra o estoque atualizado; `products.json` serve apenas como reserva se a API estiver indisponível.
 
 **Disponibilidade:** Alterações nos dias e horários semanais do painel real são salvas automaticamente. Bloqueios e reservas usam a mesma base da agenda pública; a página de agendamento recarrega os horários visíveis a cada 30 segundos e ao voltar à aba. O servidor confere novamente cada horário no envio. O painel inicia no dia atual de Lavras; registros históricos não são apagados. Cada reserva pendente, confirmada ou concluída ocupa todos os intervalos de seu serviço. Cancelar libera os intervalos. Um dia sem intervalos livres ou bloqueado aparece como indisponível.
 
@@ -36,7 +36,7 @@ node scripts/test-demo.mjs
 node scripts/preview-pages.mjs
 ```
 
-A prévia das páginas fica em `http://127.0.0.1:8766/love-pets-lavras/`. Os testes do Worker usam SQLite em memória; não criam reservas reais. Os testes verificam conflitos, autorização administrativa, calendário, bloqueios e CORS. O verificador do Pages confere arquivos, links internos, imagens e os detalhes dos 27 produtos.
+A prévia das páginas fica em `http://127.0.0.1:8766/love-pets-lavras/`. Os testes do Worker usam SQLite em memória; não criam reservas reais. Os testes verificam conflitos, autorização administrativa, calendário, bloqueios e CORS. O verificador do Pages confere arquivos, links internos, imagens e os detalhes dos 25 produtos.
 
 Para revisar larguras móveis e de tablet localmente, a prévia oferece `/__responsive?width=390` e `/__responsive?width=820`, usando um iframe da mesma origem. A tela de 390 px foi conferida com menu e detalhes de produto, e a de 820 px com a página inicial. Ambas não apresentaram rolagem horizontal.
 
@@ -62,4 +62,4 @@ Site da Love Pets com catálogo visual, agendamento online e painel administrati
 
 `node scripts/build.mjs` gera `dist/server/index.js` com os arquivos de `public/` embutidos. `node scripts/test-worker.mjs` executa verificações de reserva, conflito, administração e iCal com SQLite em memória. `node scripts/preview.mjs` inicia uma prévia local com dados temporários. `dist/` e `node_modules/` não fazem parte do código-fonte versionado.
 
-O catálogo em `public/products.json` reúne 27 itens fotografados. A disponibilidade e os preços reais devem ser confirmados com a loja até a equipe atualizar o painel.
+O catálogo em `public/products.json` reúne 25 itens fotografados. A disponibilidade e os preços reais devem ser confirmados com a loja até a equipe atualizar o painel.

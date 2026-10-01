@@ -23,6 +23,17 @@ function openProduct(product) {
   dialog.querySelector('.dialog-category').textContent = categoryLabels[product.category] || product.categoryLabel || product.category;
   dialog.querySelector('#product-title').textContent = product.name;
   dialog.querySelector('.dialog-description').textContent = product.description;
+  const flavorField = dialog.querySelector('.dialog-flavor-field');
+  const flavorSelect = dialog.querySelector('#dialog-flavor');
+  const flavors = Array.isArray(product.flavors) ? product.flavors : [];
+  flavorField.hidden = flavors.length === 0;
+  flavorSelect.replaceChildren();
+  for (const flavor of flavors) {
+    const option = document.createElement('option');
+    option.value = flavor;
+    option.textContent = flavor;
+    flavorSelect.append(option);
+  }
   const details = dialog.querySelector('.dialog-details');
   details.replaceChildren();
   for (const [label, value] of [
@@ -45,10 +56,15 @@ function openProduct(product) {
     ? 'Foto do produto enviada pela loja, com fundo padronizado. Este preço é apenas um exemplo; confirme o valor atual e a disponibilidade.'
     : 'Foto do produto enviada pela loja, com fundo padronizado. Confirme variações e disponibilidade.';
   setProductImage(dialog.querySelector('.dialog-visual'), product);
-  const message = product.stockQuantity === 0
-    ? `Olá! Gostaria de saber quando ${product.name} estará disponível novamente na Love Pets.`
-    : `Olá, Love Pets! Tenho interesse em ${product.name}. Podem confirmar o preço atual, a variação disponível e como retirar?`;
-  dialog.querySelector('.dialog-whatsapp').href = `https://wa.me/5535999146809?text=${encodeURIComponent(message)}`;
+  function updateWhatsApp() {
+    const requestedProduct = `${product.name}${flavors.length ? `, sabor ${flavorSelect.value}` : ''}`;
+    const message = product.stockQuantity === 0
+      ? `Olá! Gostaria de saber quando ${requestedProduct} estará disponível novamente na Love Pets.`
+      : `Olá, Love Pets! Tenho interesse em ${requestedProduct}. Podem confirmar o preço atual, a disponibilidade e como retirar?`;
+    dialog.querySelector('.dialog-whatsapp').href = `https://wa.me/5535999146809?text=${encodeURIComponent(message)}`;
+  }
+  flavorSelect.onchange = updateWhatsApp;
+  updateWhatsApp();
   dialog.showModal();
 }
 
@@ -57,7 +73,7 @@ function matchingProducts() {
   return products.filter(product => {
     if (currentCategory !== 'all' && product.category !== currentCategory) return false;
     if (!query) return true;
-    const text = [product.name, product.description, categoryLabels[product.category] || product.category]
+    const text = [product.name, product.description, ...(product.flavors || []), categoryLabels[product.category] || product.category]
       .join(' ').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return text.includes(query);
   });
@@ -96,6 +112,12 @@ function renderProducts() {
     const summary = document.createElement('p');
     summary.className = 'product-summary';
     summary.textContent = product.description;
+    if (product.flavors?.length) {
+      const flavors = document.createElement('p');
+      flavors.className = 'product-flavor-count';
+      flavors.textContent = `${product.flavors.length} sabores · escolha nos detalhes`;
+      info.append(label, title, summary, flavors);
+    }
     const price = document.createElement('strong');
     price.className = 'product-price';
     price.textContent = product.price || 'Preço sob consulta';
@@ -107,7 +129,8 @@ function renderProducts() {
     button.textContent = 'Ver detalhes';
     button.setAttribute('aria-label', `Ver detalhes: ${product.name}`);
     button.addEventListener('click', () => openProduct(product));
-    info.append(label, title, summary, price, stock, button);
+    if (!product.flavors?.length) info.append(label, title, summary);
+    info.append(price, stock, button);
     card.append(photo, info);
     grid.append(card);
   }

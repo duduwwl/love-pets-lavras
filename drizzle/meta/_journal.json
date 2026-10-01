@@ -36,6 +36,13 @@
       "when": 1790895000000,
       "tag": "0004_real_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1790898600000,
+      "tag": "0005_product_flavors",
+      "breakpoints": true
     }
   ]
 }

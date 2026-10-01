@@ -50,15 +50,10 @@ const products = items.map(([name, category, image, amount, description, usage, 
   price: `R$ ${amount.toFixed(2).replace('.', ',')} · ilustrativo`,
   stockQuantity: null,
   illustrative: false,
-}));
+})).filter(item => !['10000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000010'].includes(item.id));
+const oneByOne = products.find(item => item.id === '10000000-0000-4000-8000-000000000008');
+oneByOne.name = 'OneByOne Fit 50 g';
+oneByOne.description = 'Snack mastigável OneByOne Fit para cães, 50 g. Escolha entre Maçã com cenoura e quinoa, Manga com beterraba e linhaça ou Morango com batata-doce e chia.';
+oneByOne.flavors = ['Maçã', 'Manga', 'Morango'];
 writeFileSync('public/products.json', JSON.stringify(products, null, 2) + '\n');
-
-const quote = value => value == null ? 'NULL' : `'${String(value).replaceAll("'", "''")}'`;
-const oldIds = Array.from({length: 22}, (_, index) => `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`);
-const statements = [
-  `DELETE FROM shop_products WHERE id IN (${oldIds.map(quote).join(', ')});`,
-  ...products.map(item => `INSERT OR IGNORE INTO shop_products (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, illustrative) VALUES (${[item.id,item.name,item.category,item.description,item.usage,item.selection,item.care,item.image,item.price,1,null,0].map(quote).join(', ')});`),
-  "INSERT OR IGNORE INTO catalog_bootstrap (key) VALUES ('real-catalog-v2');",
-];
-writeFileSync('drizzle/0004_real_catalog.sql', statements.join('\n--> statement-breakpoint\n') + '\n');
 console.log(`Prepared ${products.length} real catalog items from 23 photographs.`);

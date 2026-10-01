@@ -70,6 +70,7 @@ export const shopProducts = sqliteTable("shop_products", {
   price: text("price"),
   available: integer("available", { mode: "boolean" }).notNull().default(true),
   stockQuantity: integer("stock_quantity"),
+  flavors: text("flavors").notNull().default("[]"),
   illustrative: integer("illustrative", { mode: "boolean" }).notNull().default(false),
   imageCol: integer("image_col"),
   imageRow: integer("image_row"),
