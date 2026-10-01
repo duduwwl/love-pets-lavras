@@ -7,9 +7,9 @@ let currentCategory = 'mantinhas';
 
 function setProductImage(element, product) {
   element.style.backgroundImage = `url("${product.image}")`;
-  element.style.backgroundSize = `${product.cols * 100}% ${product.rows * 100}%`;
-  element.style.backgroundPosition = `${product.col / (product.cols - 1) * 100}% ${product.row / (product.rows - 1) * 100}%`;
-  element.setAttribute('aria-label', `Imagem ilustrativa de ${product.name}`);
+  element.style.backgroundSize = product.cols ? `${product.cols * 100}% ${product.rows * 100}%` : 'cover';
+  element.style.backgroundPosition = product.cols ? `${product.col / (product.cols - 1) * 100}% ${product.row / (product.rows - 1) * 100}%` : 'center';
+  element.setAttribute('aria-label', `${product.id ? 'Foto' : 'Imagem ilustrativa'} de ${product.name}`);
 }
 
 function openProduct(product) {
@@ -24,6 +24,8 @@ function openProduct(product) {
     const value = document.createElement('dd'); value.textContent = text;
     row.append(term,value); details.append(row);
   }
+  if (product.price) { const row = document.createElement('div'); const term = document.createElement('dt'); term.textContent = 'Preço'; const value = document.createElement('dd'); value.textContent = product.price; row.append(term, value); details.append(row); }
+  dialog.querySelector('.dialog-note').textContent = product.id ? 'Foto enviada pela loja. Confirme tamanhos, cores, preço e disponibilidade antes de concluir o pedido.' : 'Foto ilustrativa de referência. A equipe confirma modelo, medidas, material, preço e estoque antes do pedido.';
   setProductImage(dialog.querySelector('.dialog-visual'), product);
   const message = `Olá! Quero pedir ${product.name} na Love Pets. Podem confirmar os modelos disponíveis, as medidas ou tamanhos, as cores, o preço e como retirar?`;
   dialog.querySelector('.dialog-whatsapp').href = `https://wa.me/5535999146809?text=${encodeURIComponent(message)}`;
@@ -64,7 +66,14 @@ tabs.forEach((tab,index)=>{
 });
 dialog.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
-fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`)
- .then(response=>{if(!response.ok)throw new Error('products');return response.json();})
- .then(data=>{products=Array.isArray(data)?data:[];renderProducts();})
- .catch(()=>{grid.textContent='Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.';});
+Promise.allSettled([
+  fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`).then(response => { if (!response.ok) throw new Error('products'); return response.json(); }),
+  fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(10000) }).then(response => { if (!response.ok) throw new Error('live products'); return response.json(); }),
+]).then(([references, added]) => {
+  const staticProducts = references.status === 'fulfilled' && Array.isArray(references.value) ? references.value : [];
+  const newProducts = added.status === 'fulfilled' && Array.isArray(added.value.products) ? added.value.products.map(item => ({ ...item, categoryLabel: categoryLabels[item.category] })) : [];
+  products = [...newProducts, ...staticProducts];
+  if (!products.length) { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; return; }
+  tabs.forEach(tab => { const count = products.filter(item => item.category === tab.dataset.category).length; tab.querySelector('small').textContent = String(count).padStart(2, '0'); });
+  renderProducts();
+});

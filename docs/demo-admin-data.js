@@ -1,7 +1,8 @@
 // This public demo contains fictional examples only. It never calls the live API.
 (() => {
  const key='love-pets-demo-v2';
- const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const currentDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ let today=currentDay();
  const addDay=(days)=>{const d=new Date(today+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
  const sample=()=>({
   today,
@@ -24,6 +25,7 @@
  const esc=(s)=>String(s).replaceAll('\\','\\\\').replaceAll('\n','\\n').replaceAll(',','\\,').replaceAll(';','\\;');
  const stamp=(date,time)=>date.replaceAll('-','')+'T'+time.replace(':','')+'00';
  window.LOVE_PETS_DEMO_API=async(path,options={})=>{
+  if(currentDay()!==today){today=currentDay();data=sample();save();}
   const url=new URL(path,location.origin),method=options.method||'GET';
   const body=options.body?JSON.parse(options.body):{};
   if(url.pathname==='/api/admin/state'&&method==='GET'){

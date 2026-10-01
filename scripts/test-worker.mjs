@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import worker from '../dist/server/index.js';
 
 const sqlite = new DatabaseSync(':memory:');
-for (const statement of readFileSync('drizzle/0000_neat_kronos.sql', 'utf8').split('--> statement-breakpoint').map(s => s.trim()).filter(Boolean)) sqlite.exec(statement);
+for (const migration of readdirSync('drizzle').filter(name => name.endsWith('.sql')).sort()) {
+  for (const statement of readFileSync(`drizzle/${migration}`, 'utf8').split('--> statement-breakpoint').map(s => s.trim()).filter(Boolean)) sqlite.exec(statement);
+}
 sqlite.exec('PRAGMA foreign_keys = ON');
 
 class Statement {
@@ -48,7 +50,8 @@ assert.equal((await call('/api/admin/state')).status, 401);
 
 const date = futureTuesday();
 const config = await data(await call('/api/config'));
-assert.equal(config.services.length, 3);
+assert.equal(config.services.length, 2);
+assert(!config.services.some(service => service.id === 'tosa'));
 const initial = await data(await call(`/api/availability?date=${date}&service=banho-tosa`));
 assert(initial.slots.includes('12:00'));
 const booking = { date, time: '12:00', service: 'banho-tosa', petName: 'Mel', petType: 'cao', guardianName: 'Ana', phone: '35999998888', email: 'ana@example.com', notes: 'Primeira visita' };
@@ -66,6 +69,8 @@ const state = await data(await call('/api/admin/state', { headers: adminHeaders 
 assert.equal(state.appointments.length, 1);
 assert.equal(state.appointments[0].pet_name, 'Mel');
 assert.equal((await call(`/api/admin/appointments/${saved.id}`, { method: 'PATCH', headers: adminHeaders, body: { status: 'confirmed' } })).status, 200);
+assert.equal((await call(`/api/admin/appointments/${saved.id}`, { method: 'PATCH', headers: adminHeaders, body: { status: 'completed' } })).status, 200);
+assert(!(await data(await call(`/api/availability?date=${date}&service=banho`))).slots.includes('12:00'));
 assert.equal((await call('/api/calendar.ics?token=wrong')).status, 401);
 const feed = await call('/api/calendar.ics?token=test-feed-secret');
 assert.equal(feed.status, 200);
@@ -90,6 +95,17 @@ assert.equal((await crossOrigin('/api/admin/state','OPTIONS',undefined,pagesOrig
 assert.equal((await crossOrigin('/api/appointments','OPTIONS',undefined,'https://untrusted.example',{'access-control-request-method':'POST'})).status,403);
 assert.equal((await crossOrigin('/api/config')).headers.get('access-control-allow-origin'),pagesOrigin);
 assert.equal((await crossOrigin('/api/admin/state')).headers.get('access-control-allow-origin'),null);
+const photo = 'data:image/webp;base64,UklGRgAAAAAA';
+const product = { name:'Caminha de teste',category:'caminhas',description:'Caminha macia',usage:'Descanso',selection:'Meça o pet',care:'Lavar conforme etiqueta',image:photo,price:'R$ 50',available:true };
+assert.equal((await call('/api/admin/products', { method:'POST', body: product })).status,401);
+const createdProduct = await data(await call('/api/admin/products', { method:'POST',headers:adminHeaders,body:product }));
+assert.match(createdProduct.id,/^[0-9a-f-]{36}$/);
+assert.equal((await data(await crossOrigin('/api/products'))).products.length,1);
+assert.equal((await crossOrigin('/api/products')).headers.get('access-control-allow-origin'),pagesOrigin);
+assert.equal((await call(`/api/admin/products/${createdProduct.id}`, { method:'PUT',headers:adminHeaders,body:{...product,available:false} })).status,200);
+assert.equal((await data(await call('/api/products'))).products.length,0);
+assert.equal((await data(await call('/api/admin/products', {headers:adminHeaders}))).products.length,1);
+assert.equal((await call(`/api/admin/products/${createdProduct.id}`, {method:'DELETE',headers:adminHeaders})).status,200);
 const nextDate = new Date(`${date}T12:00:00Z`);nextDate.setUTCDate(nextDate.getUTCDate()+1);
 const pagesBooking={...booking,date:nextDate.toISOString().slice(0,10),phone:'35988887777'};
 assert.equal((await crossOrigin('/api/appointments','POST',pagesBooking,'https://untrusted.example')).status,403);

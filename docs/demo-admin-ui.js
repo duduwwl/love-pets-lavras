@@ -102,7 +102,9 @@ function renderServices() {
   servicesList.replaceChildren();
   state.services.forEach(service => {
     const row = document.createElement('div'); row.className = 'service-row'; row.dataset.id = service.id; row.dataset.label = service.label;
-    const label = document.createElement('label'); const enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = service.enabled; enabled.name = 'enabled'; label.append(enabled, document.createTextNode(service.label));
+    row.dataset.enabled = String(service.enabled);
+    const label = document.createElement('span'); label.className = 'service-name'; label.textContent = service.label;
+    if (!service.enabled) { const note = document.createElement('small'); note.textContent = 'Indisponível'; label.append(note); }
     const duration = document.createElement('select'); duration.name = 'durationMinutes'; duration.setAttribute('aria-label', `Duração de ${service.label}`);
     for (let minute = 30; minute <= 240; minute += 30) { const option = document.createElement('option'); option.value = minute; option.textContent = `${minute} min`; duration.append(option); }
     duration.value = String(service.durationMinutes); row.append(label, duration); servicesList.append(row);
@@ -123,11 +125,14 @@ function renderBlocks() {
 }
 
 async function loadState() {
+  const localToday = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  if (!rangeFrom.value || rangeFrom.value < localToday) rangeFrom.value = localToday;
+  if (!rangeTo.value || rangeTo.value < localToday) rangeTo.value = dayOffset(localToday, 45);
   const params = new URLSearchParams();
   if (rangeFrom.value) params.set('from', rangeFrom.value);
   if (rangeTo.value) params.set('to', rangeTo.value);
   state = await api(`/api/admin/state?${params}`);
-  if (!rangeFrom.value) rangeFrom.value = dayOffset(state.today, -7);
+  if (!rangeFrom.value || rangeFrom.value < state.today) rangeFrom.value = state.today;
   if (!rangeTo.value) rangeTo.value = dayOffset(state.today, 45);
   document.querySelector('#block-form [name=date]').min = state.today;
   renderSummary(); renderAppointments(); renderHours(); renderServices(); renderBlocks();
@@ -144,7 +149,7 @@ document.querySelector('#hours-form').addEventListener('submit', async event => 
 
 document.querySelector('#services-form').addEventListener('submit', async event => {
   event.preventDefault();
-  const services = [...servicesList.querySelectorAll('.service-row')].map(row => ({ id: row.dataset.id, label: row.dataset.label, enabled: row.querySelector('[name=enabled]').checked, durationMinutes: Number(row.querySelector('[name=durationMinutes]').value) }));
+  const services = [...servicesList.querySelectorAll('.service-row')].map(row => ({ id: row.dataset.id, label: row.dataset.label, enabled: row.dataset.enabled === 'true', durationMinutes: Number(row.querySelector('[name=durationMinutes]').value) }));
   try { await apiWrite('/api/admin/services', 'PUT', { services }); tell('Duração dos serviços salva.', true); await loadState(); }
   catch (error) { tell(error.message); }
 });
@@ -175,3 +180,8 @@ document.querySelector('#copy-calendar').addEventListener('click', async () => {
 });
 
 loadState().catch(error => { tell(error.message); list.textContent = 'A agenda está temporariamente indisponível.'; });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadState().catch(error => tell(error.message)); });
+setInterval(() => {
+  const localToday = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  if (state && state.today !== localToday) loadState().catch(error => tell(error.message));
+}, 60000);

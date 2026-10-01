@@ -55,3 +55,18 @@ export const blockedSlots = sqliteTable("blocked_slots", {
 }, (table) => [
   uniqueIndex("idx_blocked_date_time").on(table.date, table.time),
 ]);
+
+export const shopProducts = sqliteTable("shop_products", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  description: text("description").notNull(),
+  usage: text("usage").notNull(),
+  selection: text("selection").notNull(),
+  care: text("care").notNull(),
+  image: text("image").notNull(),
+  price: text("price"),
+  available: integer("available", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});

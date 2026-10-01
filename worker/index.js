@@ -4,7 +4,7 @@ const SLOT_STEP = 30;
 const DEFAULT_SERVICES = [
   { id: 'banho', label: 'Banho', durationMinutes: 60, enabled: true },
   { id: 'banho-tosa', label: 'Banho e tosa', durationMinutes: 120, enabled: true },
-  { id: 'tosa', label: 'Tosa', durationMinutes: 90, enabled: true },
+  { id: 'tosa', label: 'Tosa', durationMinutes: 90, enabled: false },
 ];
 const DEFAULT_HOURS = Array.from({ length: 7 }, (_, weekday) => ({
   weekday,
@@ -98,7 +98,7 @@ async function hours(db) {
 
 async function availability(db, date, serviceId) {
   if (!bookableDate(date)) return { date, slots: [] };
-  const service = (await services(db)).find(item => item.id === serviceId && item.enabled);
+  const service = (await services(db)).find(item => item.id === serviceId && item.id !== 'tosa' && item.enabled);
   if (!service) return null;
   const schedule = (await hours(db))[weekday(date)];
   if (!schedule.enabled) return { date, service: serviceId, slots: [] };
@@ -112,9 +112,9 @@ async function availability(db, date, serviceId) {
   return { date, service: serviceId, durationMinutes: service.durationMinutes, slots };
 }
 
-async function readBody(request) {
+async function readBody(request, maxLength = 6000) {
   const raw = await request.text();
-  if (raw.length > 6000) throw new Error('too_large');
+  if (raw.length > maxLength) throw new Error('too_large');
   try { return JSON.parse(raw); } catch { throw new Error('invalid_json'); }
 }
 
@@ -126,7 +126,7 @@ function sameOrigin(request) {
 // Only the public booking endpoints are available to the GitHub Pages frontend.
 const PUBLIC_BOOKING_ORIGINS = new Set(['https://duduwwl.github.io']);
 function publicBookingPath(path) {
-  return ['/api/config', '/api/availability', '/api/appointments'].includes(path) || /^\/api\/appointments\/[0-9a-f-]{36}\.ics$/.test(path);
+  return ['/api/config', '/api/availability', '/api/appointments', '/api/products'].includes(path) || /^\/api\/appointments\/[0-9a-f-]{36}\.ics$/.test(path);
 }
 function bookingOriginAllowed(request) {
   return sameOrigin(request) || PUBLIC_BOOKING_ORIGINS.has(request.headers.get('origin'));
@@ -199,7 +199,7 @@ function adminDenied(request, env) {
 async function adminState(db, request) {
   const url = new URL(request.url);
   const today = localNow().date;
-  const from = validDate(url.searchParams.get('from')) ? url.searchParams.get('from') : dayOffset(today, -7);
+  const from = validDate(url.searchParams.get('from')) ? url.searchParams.get('from') : today;
   const to = validDate(url.searchParams.get('to')) ? url.searchParams.get('to') : dayOffset(today, 45);
   if (from > to || to > dayOffset(from, 120)) return fail('Intervalo de datas inválido.');
   const [bookings, blocked, weekly, serviceList] = await Promise.all([
@@ -297,11 +297,58 @@ function calendarResponse(bookings, filename) {
   return new Response(lines.join('\r\n') + '\r\n', { headers: { 'content-type': 'text/calendar; charset=utf-8', 'content-disposition': `attachment; filename="${filename}"`, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' } });
 }
 
+async function ensureShopProducts(db) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS shop_products (
+    id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL,
+    description TEXT NOT NULL, usage TEXT NOT NULL, selection TEXT NOT NULL,
+    care TEXT NOT NULL, image TEXT NOT NULL, price TEXT, available INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+}
+
+const PRODUCT_CATEGORIES = new Set(['mantinhas', 'roupinhas', 'caminhas', 'caes', 'gatos']);
+function productInput(body) {
+  if (!body || !PRODUCT_CATEGORIES.has(body.category)) return null;
+  const product = {
+    name: clean(body.name, 100), category: body.category,
+    description: clean(body.description, 450), usage: clean(body.usage, 300),
+    selection: clean(body.selection, 300), care: clean(body.care, 300),
+    price: clean(body.price, 40) || null, available: body.available !== false,
+    image: body.image,
+  };
+  if (!product.name || !product.description || !product.usage || !product.selection || !product.care ||
+      typeof product.image !== 'string' || product.image.length > 360000 ||
+      !/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(product.image)) return null;
+  return product;
+}
+
+async function listShopProducts(db, includeUnavailable = false) {
+  await ensureShopProducts(db);
+  const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available
+    FROM shop_products ${includeUnavailable ? '' : 'WHERE available = 1'} ORDER BY created_at DESC`;
+  return (await rows(db, sql)).map(item => ({ ...item, available: !!item.available }));
+}
+
+async function writeShopProduct(db, request, id = crypto.randomUUID()) {
+  let body;
+  try { body = await readBody(request, 370000); } catch { return fail('Foto ou dados inválidos. Use uma imagem menor.'); }
+  const product = productInput(body);
+  if (!product) return fail('Preencha os dados do produto e envie uma foto JPG, PNG ou WebP de até 250 KB.');
+  const values = [product.name, product.category, product.description, product.usage, product.selection, product.care, product.image, product.price, product.available ? 1 : 0];
+  if (request.method === 'POST') {
+    await db.prepare('INSERT INTO shop_products (id, name, category, description, usage, selection, care, image, price, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, ...values).run();
+    return json({ id, ok: true }, 201);
+  }
+  const result = await db.prepare('UPDATE shop_products SET name = ?, category = ?, description = ?, usage = ?, selection = ?, care = ?, image = ?, price = ?, available = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(...values, id).run();
+  return result.meta?.changes ? json({ id, ok: true }) : fail('Produto não encontrado.', 404);
+}
+
 async function api(request, env, path) {
   if (!env.DB) return fail('A agenda está temporariamente indisponível.', 503);
   const db = env.DB;
   const url = new URL(request.url);
-  if (path === '/api/config' && request.method === 'GET') return json({ services: (await services(db)).filter(s => s.enabled), today: localNow().date, maxDate: dayOffset(localNow().date, MAX_DAYS), timezone: ZONE });
+  if (path === '/api/config' && request.method === 'GET') return json({ services: (await services(db)).filter(s => s.enabled && s.id !== 'tosa'), today: localNow().date, maxDate: dayOffset(localNow().date, MAX_DAYS), timezone: ZONE });
+  if (path === '/api/products' && request.method === 'GET') return json({ products: await listShopProducts(db) });
   if (path === '/api/availability' && request.method === 'GET') {
     const result = await availability(db, url.searchParams.get('date'), url.searchParams.get('service'));
     return result ? json(result) : fail('Serviço inválido.');
@@ -323,6 +370,11 @@ async function api(request, env, path) {
   if (denied) return denied;
   if (!['GET', 'HEAD'].includes(request.method) && !sameOrigin(request)) return fail('Origem não permitida.', 403);
   if (path === '/api/admin/state' && request.method === 'GET') return adminState(db, request);
+  if (path === '/api/admin/products' && request.method === 'GET') return json({ products: await listShopProducts(db, true) });
+  if (path === '/api/admin/products' && request.method === 'POST') { await ensureShopProducts(db); return writeShopProduct(db, request); }
+  const shopProduct = path.match(/^\/api\/admin\/products\/([0-9a-f-]{36})$/);
+  if (shopProduct && request.method === 'PUT') { await ensureShopProducts(db); return writeShopProduct(db, request, shopProduct[1]); }
+  if (shopProduct && request.method === 'DELETE') { await ensureShopProducts(db); const result = await db.prepare('DELETE FROM shop_products WHERE id = ?').bind(shopProduct[1]).run(); return result.meta?.changes ? json({ ok: true }) : fail('Produto não encontrado.', 404); }
   if (path === '/api/admin/calendar-url' && request.method === 'GET') return env.CALENDAR_FEED_TOKEN ? json({ url: `${url.origin}/api/calendar.ics?token=${encodeURIComponent(env.CALENDAR_FEED_TOKEN)}` }) : fail('Calendário externo não configurado.', 503);
   if (path === '/api/admin/hours' && request.method === 'PUT') return saveHours(db, request);
   if (path === '/api/admin/services' && request.method === 'PUT') return saveServices(db, request);

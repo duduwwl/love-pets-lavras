@@ -31,6 +31,10 @@ h2{font-weight:400;letter-spacing:-.067em;line-height:1.14}
 .intro-mark{font-weight:500}
 .care-panel-bottom p{font-weight:400;letter-spacing:-.055em}
 .header-inner{gap:30px}
+.header-slogan{font:italic 500 17px/1.2 'Cormorant Garamond',Georgia,serif;color:var(--red);white-space:nowrap;margin-right:auto}
+@media(max-width:1100px){.header-slogan{font-size:15px}}
+@media(max-width:900px){.header-slogan{margin-left:auto;margin-right:12px;font-size:16px}}
+@media(max-width:520px){.header-slogan{max-width:118px;white-space:normal;text-align:center;font-size:15px;line-height:1.05;margin-right:0}}
 .hero-copy{padding-top:72px}
 .hero h1{font-size:clamp(3.45rem,4.8vw,5.4rem);margin:22px 0 18px}
 .hero-actions{margin-top:16px}
