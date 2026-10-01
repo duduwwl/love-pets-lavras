@@ -13,6 +13,8 @@ export const appointments = sqliteTable("appointments", {
   phone: text("phone").notNull(),
   email: text("email"),
   notes: text("notes"),
+  taxydog: integer("taxydog", { mode: "boolean" }).notNull().default(false),
+  pickupAddress: text("pickup_address"),
   status: text("status").notNull().default("pending"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),

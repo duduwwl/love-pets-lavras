@@ -165,7 +165,10 @@ async function createAppointment(request, db) {
   const phone = String(body.phone || '').replace(/\D/g, '');
   const email = clean(body.email, 120).toLowerCase();
   const notes = clean(body.notes, 500);
-  if (!bookableDate(date) || !validTime(time) || !petName || !guardianName || !['cao', 'gato'].includes(petType) || !['10', '11'].includes(String(phone.length)) || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+  const taxydog = body.taxydog === true;
+  const pickupAddress = taxydog ? clean(body.pickupAddress, 240) : '';
+  if (taxydog && pickupAddress.length < 10) return fail('Informe o endereço completo para o Taxydog.');
+  if (!bookableDate(date) || !validTime(time) || !petName || !guardianName || !['cao', 'gato'].includes(petType) || !['10', '11'].includes(String(phone.length)) || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) || (body.taxydog != null && typeof body.taxydog !== 'boolean')) {
     return fail('Revise a data, o horário e os dados de contato.');
   }
   const available = await availability(db, date, service);
@@ -173,7 +176,7 @@ async function createAppointment(request, db) {
   const recent = await first(db, "SELECT COUNT(*) AS count FROM appointments WHERE phone = ? AND created_at >= datetime('now', '-1 day') AND status <> 'cancelled'", phone);
   if ((recent?.count || 0) >= 3) return fail('Há muitas solicitações recentes para este número. Fale com a equipe.', 429);
   const id = crypto.randomUUID();
-  const statements = [db.prepare('INSERT INTO appointments (id, date, time, service, duration_minutes, pet_name, pet_type, guardian_name, phone, email, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, date, time, service, available.durationMinutes, petName, petType, guardianName, phone, email || null, notes || null, 'pending')];
+  const statements = [db.prepare('INSERT INTO appointments (id, date, time, service, duration_minutes, pet_name, pet_type, guardian_name, phone, email, notes, taxydog, pickup_address, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, date, time, service, available.durationMinutes, petName, petType, guardianName, phone, email || null, notes || null, taxydog ? 1 : 0, pickupAddress || null, 'pending')];
   for (const cell of cellsFor(time, available.durationMinutes)) {
     statements.push(db.prepare('INSERT INTO calendar_cells (date, time, appointment_id) VALUES (?, ?, ?)').bind(date, cell, id));
   }
@@ -204,7 +207,7 @@ async function adminState(db, request) {
   const to = validDate(url.searchParams.get('to')) ? url.searchParams.get('to') : dayOffset(today, 45);
   if (from > to || to > dayOffset(from, 120)) return fail('Intervalo de datas inválido.');
   const [bookings, blocked, weekly, serviceList] = await Promise.all([
-    rows(db, 'SELECT id, date, time, service, duration_minutes, pet_name, pet_type, guardian_name, phone, email, notes, status, created_at FROM appointments WHERE date BETWEEN ? AND ? ORDER BY date, time', from, to),
+    rows(db, 'SELECT id, date, time, service, duration_minutes, pet_name, pet_type, guardian_name, phone, email, notes, taxydog, pickup_address, status, created_at FROM appointments WHERE date BETWEEN ? AND ? ORDER BY date, time', from, to),
     rows(db, 'SELECT id, date, time, reason FROM blocked_slots WHERE date BETWEEN ? AND ? ORDER BY date, time', from, to),
     hours(db), services(db),
   ]);

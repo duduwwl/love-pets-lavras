@@ -67,6 +67,7 @@ function renderAppointments() {
     if (window.LOVE_PETS_DEMO_API) contact.textContent = 'Contato fictício · demonstração';
     else contact.append(phone);
     person.append(guardian, contact);
+    if (item.taxydog) { const transport = document.createElement('span'); transport.className = 'appointment-transport'; transport.textContent = `Taxydog · Buscar e levar: ${item.pickup_address || 'Endereço não informado'}`; person.append(transport); }
     if (item.notes) { const note = document.createElement('span'); note.textContent = item.notes; person.append(note); }
     const actions = document.createElement('div'); actions.className = 'appointment-actions';
     const pill = document.createElement('span'); pill.className = `status-pill ${item.status}`; pill.textContent = statusLabels[item.status] || item.status;

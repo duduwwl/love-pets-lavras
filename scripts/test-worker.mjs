@@ -79,6 +79,7 @@ assert.equal((await call('/api/admin/blocks', { method: 'POST', headers: adminHe
 const state = await data(await call('/api/admin/state', { headers: adminHeaders }));
 assert.equal(state.appointments.length, 1);
 assert.equal(state.appointments[0].pet_name, 'Mel');
+assert.equal(state.appointments[0].taxydog, 0);
 assert.equal((await call(`/api/admin/appointments/${saved.id}`, { method: 'PATCH', headers: adminHeaders, body: { status: 'confirmed' } })).status, 200);
 assert.equal((await call(`/api/admin/appointments/${saved.id}`, { method: 'PATCH', headers: adminHeaders, body: { status: 'completed' } })).status, 200);
 assert(!(await data(await call(`/api/availability?date=${date}&service=banho`))).slots.includes('12:00'));
@@ -134,6 +135,12 @@ assert.equal((await data(await call('/api/admin/products', {headers:adminHeaders
 assert.equal((await call(`/api/admin/products/${createdProduct.id}`, {method:'DELETE',headers:adminHeaders})).status,200);
 assert.equal(storedPhotos.size,0);
 const nextDate = new Date(`${date}T12:00:00Z`);nextDate.setUTCDate(nextDate.getUTCDate()+1);
+const taxiBooking={...booking,date:nextDate.toISOString().slice(0,10),time:'16:00',service:'banho',phone:'35977776666',taxydog:true,pickupAddress:'Rua das Flores, 25, Centro, Lavras'};
+assert.equal((await call('/api/appointments',{method:'POST',body:{...taxiBooking,pickupAddress:'Rua'}})).status,400);
+assert.equal((await call('/api/appointments',{method:'POST',body:taxiBooking})).status,201);
+const taxiState=await data(await call('/api/admin/state',{headers:adminHeaders}));
+assert.equal(taxiState.appointments.find(item=>item.phone===taxiBooking.phone)?.taxydog,1);
+assert.equal(taxiState.appointments.find(item=>item.phone===taxiBooking.phone)?.pickup_address,taxiBooking.pickupAddress);
 const pagesBooking={...booking,date:nextDate.toISOString().slice(0,10),phone:'35988887777'};
 assert.equal((await crossOrigin('/api/appointments','POST',pagesBooking,'https://untrusted.example')).status,403);
 const pagesSaved=await crossOrigin('/api/appointments','POST',pagesBooking);
@@ -141,5 +148,7 @@ assert.equal(pagesSaved.status,201);
 assert.equal(pagesSaved.headers.get('access-control-allow-origin'),pagesOrigin);
 assert.equal((await crossOrigin('/api/appointments','POST',pagesBooking)).status,409);
 assert.equal((await call('/produtos')).status,200);
+assert.equal((await call('/assets/fachada-love-pets.jpeg')).headers.get('content-type'),'image/jpeg');
+assert.equal((await call('/assets/taxydog-love-pets.jpeg')).headers.get('content-type'),'image/jpeg');
 console.log('Booking, conflicts, admin authorization, calendar, blocks, and GitHub Pages CORS verified.');
 
