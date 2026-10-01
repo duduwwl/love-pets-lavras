@@ -8,13 +8,13 @@ if(output!==join(root,'docs'))throw new Error('Invalid output path');
 const base='/love-pets-lavras/';
 const origin='https://duduwwl.github.io';
 const apiOrigin='https://love-pets-lavras.duduwwl.chatgpt.site';
-const routes={'index.html':'index.html','produtos.html':'produtos/index.html','agendar.html':'agendar/index.html','equipe.html':'equipe/index.html','demo-admin.html':'admin/index.html'};
-const exclusions=new Set(['admin.html','admin.js','runtime.js','sitemap.xml','robots.txt','gato-hero.png']);
+const routes={'index.html':'index.html','produtos.html':'produtos/index.html','agendar.html':'agendar/index.html','equipe.html':'equipe/index.html','admin-gateway.html':'admin/index.html'};
+const exclusions=new Set(['admin.html','admin.js','admin-products.js','demo-admin.html','demo-admin-data.js','runtime.js','sitemap.xml','robots.txt','gato-hero.png']);
 function pageLink(value) {
   if(!value.startsWith('/')||value.startsWith('//'))return value;
   const [path,...fragment]=value.split('#');
   const bookingLink=base+'agendar/';
-  const names={'/':base,'/produtos':base+'produtos/','/produtos.html':base+'produtos/','/agendar':bookingLink,'/agendar.html':bookingLink,'/equipe.html':base+'equipe/','/admin':base+'equipe/','/demo-admin.html':base+'admin/'};
+  const names={'/':base,'/produtos':base+'produtos/','/produtos.html':base+'produtos/','/agendar':bookingLink,'/agendar.html':bookingLink,'/equipe.html':base+'equipe/','/admin':base+'admin/','/admin-gateway.html':base+'admin/'};
   return (names[path] || base+path.slice(1))+(fragment.length?'#'+fragment.join('#'):'');
 }
 rmSync(output,{recursive:true,force:true});mkdirSync(output,{recursive:true});
@@ -27,7 +27,6 @@ function collect(dir){
   const destination=join(output,routes[name]||name);mkdirSync(resolve(destination,'..'),{recursive:true});
   if(name.endsWith('.html')){
    let html=readFileSync(input,'utf8');
-   if(name==='demo-admin.html')html=html.replace('src="/admin.js"','src="/demo-admin-ui.js"');
    html=html.replace(/(href|src|action)="(\/[^"]*)"/g,(_,attr,value)=>`${attr}="${pageLink(value)}"`);
    const route=(routes[name]||name).replace(/index\.html$/,'');
    const canonical=origin+base+route;
@@ -42,10 +41,9 @@ function collect(dir){
  }
 }
 collect(source);
-copyFileSync(join(source,'admin.js'),join(output,'demo-admin-ui.js'));
 writeFileSync(join(output,'runtime.js'),`// Public connection settings; no secrets.\nwindow.LOVE_PETS_PUBLIC_BASE = ${JSON.stringify(base)};\nwindow.LOVE_PETS_API_ORIGIN = ${JSON.stringify(apiOrigin)};\n`);
 writeFileSync(join(output,'.nojekyll'),'');
 writeFileSync(join(output,'robots.txt'),`User-agent: *\nDisallow: ${base}equipe/\nDisallow: ${base}admin/\nSitemap: ${origin}${base}sitemap.xml\n`);
 writeFileSync(join(output,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${['','produtos/','agendar/'].map(route=>`<url><loc>${origin}${base}${route}</loc></url>`).join('')}</urlset>\n`);
 writeFileSync(join(output,'404.html'),`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Página não encontrada | Love Pets</title><link rel="stylesheet" href="${base}schedule.css"></head><body class="admin-page"><main class="team-entry"><span class="eyebrow">LOVE PETS · LAVRAS</span><h1>Vamos voltar<br>ao <em>início?</em></h1><p>Esta página não está disponível.</p><a class="submit-booking" href="${base}">Voltar ao site</a><a class="return-link" href="${base}produtos/">Ver produtos</a></main></body></html>`);
-console.log('GitHub Pages prepared in docs: home, products, booking form and fictional admin demo.');
+console.log('GitHub Pages prepared in docs: home, products, booking form and protected admin gateway.');

@@ -7,7 +7,7 @@ const pages=['index.html','produtos/index.html','agendar/index.html','equipe/ind
 let references=0;
 for(const path of pages){
  const html=readFileSync(join(root,path),'utf8');
- assert(!/(?:href|action)="[^"]*\.chatgpt\.site/.test(html),`${path}: navigation leaves GitHub Pages`);
+ if(path!=='admin/index.html')assert(!/(?:href|action)="[^"]*\.chatgpt\.site/.test(html),`${path}: navigation leaves GitHub Pages`);
  assert(!html.includes('location.replace'),`${path}: unexpected redirect`);
  for(const [,value] of html.matchAll(/(?:href|src|action)="([^"]*)"/g)){
   if(!value.startsWith('/'))continue;
@@ -30,9 +30,12 @@ assert(home.includes('🐶')&&home.includes('🐱'));
 const booking=readFileSync(join(root,'agendar/index.html'),'utf8');
 assert(booking.includes('id="booking-form"'));
 assert(booking.includes('Nome do tutor'));
+assert(!booking.includes('01—03'));
 assert(readFileSync(join(root,'booking.js'),'utf8').includes("service.id !== 'tosa'"));
 assert(readFileSync(join(root,'equipe/index.html'),'utf8').includes('value="lovepets-demo"'));
-assert(readFileSync(join(root,'admin/index.html'),'utf8').includes('demo-admin-data.js'));
+const admin=readFileSync(join(root,'admin/index.html'),'utf8');
+assert(admin.includes('url=https://love-pets-lavras.duduwwl.chatgpt.site/admin'));
+assert(!admin.includes('demo-admin-data.js'));
 const products=JSON.parse(readFileSync(join(root,'products.json'),'utf8'));
 assert.equal(products.length,22);
 const counts={mantinhas:4,roupinhas:4,caminhas:4,caes:5,gatos:5};
@@ -44,4 +47,4 @@ for(const product of products){
 assert(!existsSync(join(root,'admin.html')));
 assert(!existsSync(join(root,'admin.js')));
 assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));
-console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, internal booking form, fictional admin demo.`);
+console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 22 complete products, internal booking form, protected admin gateway.`);
