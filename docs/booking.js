@@ -46,9 +46,10 @@ function renderServices() {
   });
 }
 
-async function loadTimes() {
+async function loadTimes({ preserveSelection = false } = {}) {
   if (requestMode) return;
   const attempt = ++loadingTimes;
+  const previousTime = preserveSelection ? selectedTime : '';
   selectedTime = '';
   timesElement.replaceChildren();
   if (!dateElement.value || !selectedService()) { slotStatus.textContent = 'Selecione uma data para ver os horários.'; return; }
@@ -62,6 +63,7 @@ async function loadTimes() {
       const label = document.createElement('label');
       const input = document.createElement('input');
       input.type = 'radio'; input.name = 'time'; input.value = time;
+      if (time === previousTime) { input.checked = true; selectedTime = time; }
       input.addEventListener('change', () => { selectedTime = time; showMessage(''); });
       const span = document.createElement('span'); span.textContent = time;
       label.append(input, span); timesElement.append(label);
@@ -117,6 +119,8 @@ function prepareWhatsAppRequest(payload) {
 }
 
 dateElement.addEventListener('change', loadTimes);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && dateElement.value && !form.hidden) loadTimes({ preserveSelection: true }); });
+setInterval(() => { if (!document.hidden && dateElement.value && !form.hidden) loadTimes({ preserveSelection: true }); }, 30000);
 
 form.addEventListener('submit', async event => {
   event.preventDefault();

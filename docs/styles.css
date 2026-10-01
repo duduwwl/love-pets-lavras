@@ -121,6 +121,7 @@ h2{font-weight:400;letter-spacing:-.067em;line-height:1.14}
 .desktop-nav a[href='/produtos']{white-space:nowrap}
 h1,h2,.hero h1{letter-spacing:-.04em}
 .product-info h3{letter-spacing:-.025em}
+.product-info .product-stock{display:block;color:#6c5545;letter-spacing:0;font-size:11px;margin:0 0 12px}
 .dialog-content h2{letter-spacing:-.035em}
 @media(max-width:900px){.product-summary{display:none}.shop-page .shop-heading{display:block}.shop-page .shop-heading>p{display:block;max-width:590px;margin-top:18px}.shop-page{padding-block:50px 65px}}
 @media(max-width:680px){.product-dialog[open]{display:block}.product-dialog .dialog-visual{position:relative;height:auto}.dialog-content{padding:25px 24px 30px}.dialog-content h2{font-size:2rem}.dialog-content .dialog-description{font-size:15px}.dialog-whatsapp{width:100%}.shop-page .shop-heading>p{display:none}.hero-dots{bottom:16px}}

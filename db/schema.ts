@@ -67,6 +67,12 @@ export const shopProducts = sqliteTable("shop_products", {
   image: text("image").notNull(),
   price: text("price"),
   available: integer("available", { mode: "boolean" }).notNull().default(true),
+  stockQuantity: integer("stock_quantity"),
+  illustrative: integer("illustrative", { mode: "boolean" }).notNull().default(false),
+  imageCol: integer("image_col"),
+  imageRow: integer("image_row"),
+  imageCols: integer("image_cols"),
+  imageRows: integer("image_rows"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });

@@ -9,7 +9,7 @@ function setProductImage(element, product) {
   element.style.backgroundImage = `url("${product.image}")`;
   element.style.backgroundSize = product.cols ? `${product.cols * 100}% ${product.rows * 100}%` : 'cover';
   element.style.backgroundPosition = product.cols ? `${product.col / (product.cols - 1) * 100}% ${product.row / (product.rows - 1) * 100}%` : 'center';
-  element.setAttribute('aria-label', `${product.id ? 'Foto' : 'Imagem ilustrativa'} de ${product.name}`);
+  element.setAttribute('aria-label', `${product.illustrative !== false ? 'Imagem ilustrativa' : 'Foto'} de ${product.name}`);
 }
 
 function openProduct(product) {
@@ -19,15 +19,17 @@ function openProduct(product) {
   const details = dialog.querySelector('.dialog-details');
   details.replaceChildren();
   for(const [label, text] of [['Para o dia a dia',product.usage],['Como escolher',product.selection],['Cuidados',product.care]]) {
+    if (!text) continue;
     const row = document.createElement('div');
     const term = document.createElement('dt'); term.textContent = label;
     const value = document.createElement('dd'); value.textContent = text;
     row.append(term,value); details.append(row);
   }
   if (product.price) { const row = document.createElement('div'); const term = document.createElement('dt'); term.textContent = 'Preço'; const value = document.createElement('dd'); value.textContent = product.price; row.append(term, value); details.append(row); }
-  dialog.querySelector('.dialog-note').textContent = product.id ? 'Foto enviada pela loja. Confirme tamanhos, cores, preço e disponibilidade antes de concluir o pedido.' : 'Foto ilustrativa de referência. A equipe confirma modelo, medidas, material, preço e estoque antes do pedido.';
+  if (product.stockQuantity != null) { const row = document.createElement('div'); const term = document.createElement('dt'); term.textContent = 'Estoque'; const value = document.createElement('dd'); value.textContent = product.stockQuantity ? `${product.stockQuantity} unidade${product.stockQuantity === 1 ? '' : 's'}` : 'Esgotado'; row.append(term, value); details.append(row); }
+  dialog.querySelector('.dialog-note').textContent = product.illustrative !== false ? 'Imagem ilustrativa de referência. Confirme modelo, medidas e cores com a equipe.' : 'Foto enviada pela loja. Confirme tamanhos e cores antes de concluir o pedido.';
   setProductImage(dialog.querySelector('.dialog-visual'), product);
-  const message = `Olá! Quero pedir ${product.name} na Love Pets. Podem confirmar os modelos disponíveis, as medidas ou tamanhos, as cores, o preço e como retirar?`;
+  const message = product.stockQuantity === 0 ? `Olá! Gostaria de saber quando ${product.name} estará disponível novamente na Love Pets.` : `Olá! Quero pedir ${product.name} na Love Pets. Podem confirmar os modelos disponíveis, as medidas ou tamanhos, as cores, o preço e como retirar?`;
   dialog.querySelector('.dialog-whatsapp').href = `https://wa.me/5535999146809?text=${encodeURIComponent(message)}`;
   dialog.showModal();
 }
@@ -42,9 +44,10 @@ function renderProducts() {
     const label=document.createElement('small'); label.textContent=product.categoryLabel;
     const title=document.createElement('h3'); title.textContent=product.name;
     const summary=document.createElement('p'); summary.className='product-summary'; summary.textContent=product.description;
+    const stock=document.createElement('small'); stock.className='product-stock'; stock.textContent=product.stockQuantity == null ? 'Disponibilidade a confirmar' : product.stockQuantity === 0 ? 'Esgotado' : `${product.stockQuantity} em estoque`;
     const button=document.createElement('button'); button.type='button'; button.textContent='Ver opção';
     button.setAttribute('aria-label',`Ver opção: ${product.name}`); button.addEventListener('click',()=>openProduct(product));
-    info.append(label,title,summary,button); card.append(photo,info); grid.append(card);
+    info.append(label,title,summary,stock,button); card.append(photo,info); grid.append(card);
   }
 }
 
@@ -66,14 +69,13 @@ tabs.forEach((tab,index)=>{
 });
 dialog.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
 dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
-Promise.allSettled([
-  fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`).then(response => { if (!response.ok) throw new Error('products'); return response.json(); }),
-  fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(10000) }).then(response => { if (!response.ok) throw new Error('live products'); return response.json(); }),
-]).then(([references, added]) => {
-  const staticProducts = references.status === 'fulfilled' && Array.isArray(references.value) ? references.value : [];
-  const newProducts = added.status === 'fulfilled' && Array.isArray(added.value.products) ? added.value.products.map(item => ({ ...item, categoryLabel: categoryLabels[item.category] })) : [];
-  products = [...newProducts, ...staticProducts];
+fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(10000) })
+  .then(response => { if (!response.ok) throw new Error('live products'); return response.json(); })
+  .then(data => { if (!Array.isArray(data.products)) throw new Error('live products'); return data.products; })
+  .catch(() => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`).then(response => { if (!response.ok) throw new Error('products'); return response.json(); }))
+  .then(items => {
+  products = items.map(item => ({ ...item, categoryLabel: categoryLabels[item.category] }));
   if (!products.length) { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; return; }
   tabs.forEach(tab => { const count = products.filter(item => item.category === tab.dataset.category).length; tab.querySelector('small').textContent = String(count).padStart(2, '0'); });
   renderProducts();
-});
+}).catch(() => { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; });

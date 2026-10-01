@@ -146,6 +146,11 @@ document.querySelector('#hours-form').addEventListener('submit', async event => 
   try { await apiWrite('/api/admin/hours', 'PUT', { hours }); tell('Horários da semana salvos.', true); await loadState(); }
   catch (error) { tell(error.message); }
 });
+let hoursSaveTimer;
+hoursList.addEventListener('change', () => {
+  clearTimeout(hoursSaveTimer);
+  hoursSaveTimer = setTimeout(() => document.querySelector('#hours-form').requestSubmit(), 450);
+});
 
 document.querySelector('#services-form').addEventListener('submit', async event => {
   event.preventDefault();

@@ -9,14 +9,12 @@ productSection.innerHTML = `<div class="panel-heading"><div><span class="panel-k
     : 'Cadastre uma foto, detalhes e disponibilidade. Os produtos publicados aparecem na loja.'}</p>
   ${productDemo ? '<a class="return-link" href="https://love-pets-lavras.duduwwl.chatgpt.site/admin#produtos" target="_blank" rel="noopener">Abrir painel protegido para publicar</a>' : ''}
   <form id="product-form" class="product-form">
-    <input type="hidden" name="id">
+    <input type="hidden" name="productId">
     <label>Nome do produto<input name="name" required maxlength="100"></label>
     <label>Categoria<select name="category"><option value="mantinhas">Mantinhas</option><option value="roupinhas">Roupinhas</option><option value="caminhas">Caminhas</option><option value="caes">Acessórios para cães</option><option value="gatos">Acessórios para gatos</option></select></label>
     <label class="full">Descrição<textarea name="description" required maxlength="450"></textarea></label>
-    <label>Para o dia a dia<textarea name="usage" required maxlength="300"></textarea></label>
-    <label>Como escolher<textarea name="selection" required maxlength="300"></textarea></label>
-    <label class="full">Cuidados<textarea name="care" required maxlength="300"></textarea></label>
-    <label>Preço ou faixa <small>(opcional)</small><input name="price" maxlength="40" placeholder="Ex.: Consulte a loja"></label>
+    <label>Preço<input name="price" required maxlength="40" placeholder="Ex.: R$ 49,90"></label>
+    <label>Quantidade em estoque<input name="stockQuantity" type="number" min="0" max="999999" step="1" required placeholder="Ex.: 5"></label>
     <label>Foto do produto<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"><img id="product-preview" class="product-preview" hidden alt="Prévia da foto"></label>
     <label class="full"><input name="available" type="checkbox" checked style="display:inline;width:auto;min-height:0;margin:0 7px 0 0">Disponível para pedidos</label>
     <div class="full"><button class="admin-save" type="submit">${productDemo ? 'Salvar exemplo' : 'Publicar produto'}</button> <button id="cancel-product-edit" type="button" hidden>Cancelar edição</button></div>
@@ -43,6 +41,7 @@ async function productsApi(path, options = {}) {
     try { items = JSON.parse(localStorage.getItem(productDemoKey) || '[]'); } catch { items = []; }
     if (options.method === 'POST') items.unshift({ ...JSON.parse(options.body), id: crypto.randomUUID() });
     if (options.method === 'PUT') items = items.map(item => item.id === path.split('/').pop() ? { ...JSON.parse(options.body), id: item.id } : item);
+    if (options.method === 'PATCH') items = items.map(item => item.id === path.split('/').at(-2) ? { ...item, ...JSON.parse(options.body) } : item);
     if (options.method === 'DELETE') items = items.filter(item => item.id !== path.split('/').pop());
     if (options.method) localStorage.setItem(productDemoKey, JSON.stringify(items));
     return { products: items };
@@ -54,7 +53,7 @@ async function productsApi(path, options = {}) {
 }
 
 function resetProductForm() {
-  productForm.reset(); productForm.elements.id.value = ''; uploadedImage = '';
+  productForm.reset(); productForm.elements.productId.value = ''; uploadedImage = '';
   productPreview.hidden = true; productPreview.removeAttribute('src');
   productSection.querySelector('#cancel-product-edit').hidden = true;
   productForm.querySelector('[type=submit]').textContent = productDemo ? 'Salvar exemplo' : 'Publicar produto';
@@ -68,11 +67,25 @@ function renderManagedProducts() {
     const photo = document.createElement('img'); photo.src = product.image; photo.alt = '';
     const info = document.createElement('div');
     const name = document.createElement('strong'); name.textContent = product.name;
-    const detail = document.createElement('span'); detail.textContent = `${product.category} · ${product.available ? 'Disponível' : 'Oculto'}${product.price ? ' · ' + product.price : ''}`;
+    const detail = document.createElement('span'); detail.textContent = `${product.category} · ${product.available ? 'Publicado' : 'Oculto'} · ${product.stockQuantity == null ? 'Estoque não informado' : `${product.stockQuantity} em estoque`}${product.price ? ' · ' + product.price : ''}`;
     info.append(name, detail);
+    const stock = document.createElement('div'); stock.className = 'stock-control';
+    const stockLabel = document.createElement('label'); stockLabel.textContent = 'Estoque';
+    const stockInput = document.createElement('input'); stockInput.type = 'number'; stockInput.min = '0'; stockInput.max = '999999'; stockInput.step = '1'; stockInput.value = product.stockQuantity ?? ''; stockInput.setAttribute('aria-label', `Quantidade em estoque de ${product.name}`);
+    const saveStock = document.createElement('button'); saveStock.type = 'button'; saveStock.textContent = 'Salvar estoque';
+    saveStock.addEventListener('click', async () => {
+      const quantity = stockInput.value === '' ? null : Number(stockInput.value);
+      if (quantity !== null && (!Number.isInteger(quantity) || quantity < 0 || quantity > 999999)) { productTell('Informe uma quantidade válida.'); return; }
+      saveStock.disabled = true;
+      try { await productsApi(`/api/admin/products/${product.id}/stock`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stockQuantity: quantity }) }); await loadManagedProducts(); productTell('Estoque atualizado na loja.', true); }
+      catch (error) { productTell(error.message); saveStock.disabled = false; }
+    });
+    stockLabel.append(stockInput); stock.append(stockLabel, saveStock);
     const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'Editar';
     edit.addEventListener('click', () => {
-      for (const key of ['id','name','category','description','usage','selection','care','price']) productForm.elements[key].value = product[key] || '';
+      productForm.elements.productId.value = product.id;
+      for (const key of ['name','category','description','price']) productForm.elements[key].value = product[key] || '';
+      productForm.elements.stockQuantity.value = product.stockQuantity ?? '';
       productForm.elements.available.checked = product.available;
       uploadedImage = product.image; productPreview.src = product.image; productPreview.hidden = false;
       productSection.querySelector('#cancel-product-edit').hidden = false;
@@ -86,7 +99,7 @@ function renderManagedProducts() {
       try { await productsApi(`/api/admin/products/${product.id}`, { method: 'DELETE' }); await loadManagedProducts(); productTell('Produto excluído.', true); }
       catch (error) { productTell(error.message); remove.disabled = false; }
     });
-    row.append(photo, info, edit, remove); productList.append(row);
+    row.append(photo, info, stock, edit, remove); productList.append(row);
   }
 }
 
@@ -121,9 +134,9 @@ productForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!productForm.reportValidity()) return;
   if (!uploadedImage) { productTell('Escolha uma foto do produto.'); return; }
-  const id = productForm.elements.id.value;
-  const body = Object.fromEntries(['name','category','description','usage','selection','care','price'].map(key => [key, productForm.elements[key].value.trim()]));
-  body.image = uploadedImage; body.available = productForm.elements.available.checked;
+  const id = productForm.elements.productId.value;
+  const body = Object.fromEntries(['name','category','description','price'].map(key => [key, productForm.elements[key].value.trim()]));
+  body.image = uploadedImage; body.available = productForm.elements.available.checked; body.stockQuantity = Number(productForm.elements.stockQuantity.value);
   const button = productForm.querySelector('[type=submit]'); button.disabled = true;
   try {
     await productsApi(id ? `/api/admin/products/${id}` : '/api/admin/products', { method: id ? 'PUT' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });

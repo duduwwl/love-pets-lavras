@@ -42,8 +42,10 @@ const counts={mantinhas:4,roupinhas:4,caminhas:4,caes:5,gatos:5};
 for(const [category,count] of Object.entries(counts))assert.equal(products.filter(p=>p.category===category).length,count);
 for(const product of products){
  for(const field of ['description','usage','selection','care'])assert(product[field]?.length>20,`${product.name}: missing ${field}`);
+ assert.match(product.id,/^[0-9a-f-]{36}$/);
  assert(product.image.startsWith(base));assert(existsSync(join(root,product.image.slice(base.length))));
 }
+assert(readFileSync(join(root,'products.js'),'utf8').includes("/api/products"));
 assert(!existsSync(join(root,'admin.html')));
 assert(!existsSync(join(root,'admin.js')));
 assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));

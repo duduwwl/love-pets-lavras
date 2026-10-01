@@ -305,20 +305,27 @@ function productInput(body) {
     name: clean(body.name, 100), category: body.category,
     description: clean(body.description, 450), usage: clean(body.usage, 300),
     selection: clean(body.selection, 300), care: clean(body.care, 300),
-    price: clean(body.price, 40) || null, available: body.available !== false,
+    price: clean(body.price, 40), available: body.available !== false,
+    stockQuantity: body.stockQuantity,
   };
-  if (!product.name || !product.description || !product.usage || !product.selection || !product.care) return null;
+  if (!product.name || !product.description || !product.price || !Number.isInteger(product.stockQuantity) || product.stockQuantity < 0 || product.stockQuantity > 999999) return null;
   return product;
 }
 
 function productImageUrl(image, origin) {
-  return image.startsWith('products/') ? `${origin}/api/product-images/${image.slice('products/'.length)}` : image;
+  return image.startsWith('products/') ? `${origin}/api/product-images/${image.slice('products/'.length)}` : image.startsWith('/') ? `${origin}${image}` : image;
 }
 
 async function listShopProducts(db, origin, includeUnavailable = false) {
-  const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available
+  const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available, stock_quantity, illustrative, image_col, image_row, image_cols, image_rows
     FROM shop_products ${includeUnavailable ? '' : 'WHERE available = 1'} ORDER BY created_at DESC`;
-  return (await rows(db, sql)).map(item => ({ ...item, image: productImageUrl(item.image, origin), available: !!item.available }));
+  return (await rows(db, sql)).map(item => ({
+    id:item.id, name:item.name, category:item.category, description:item.description,
+    usage:item.usage, selection:item.selection, care:item.care,
+    image:productImageUrl(item.image, origin), price:item.price, available:!!item.available,
+    stockQuantity:item.stock_quantity, illustrative:!!item.illustrative,
+    col:item.image_col, row:item.image_row, cols:item.image_cols, rows:item.image_rows,
+  }));
 }
 
 async function writeShopProduct(db, bucket, request, id = crypto.randomUUID()) {
@@ -327,7 +334,7 @@ async function writeShopProduct(db, bucket, request, id = crypto.randomUUID()) {
   const product = productInput(body);
   if (!product) return fail('Preencha os dados do produto.');
   const origin = new URL(request.url).origin;
-  const existing = request.method === 'PUT' ? await first(db, 'SELECT image FROM shop_products WHERE id = ?', id) : null;
+  const existing = request.method === 'PUT' ? await first(db, 'SELECT image, usage, selection, care, illustrative, image_col, image_row, image_cols, image_rows FROM shop_products WHERE id = ?', id) : null;
   if (request.method === 'PUT' && !existing) return fail('Produto não encontrado.', 404);
   let image = existing?.image;
   let uploadedKey = null;
@@ -340,12 +347,14 @@ async function writeShopProduct(db, bucket, request, id = crypto.randomUUID()) {
   } else if (!existing || body.image !== productImageUrl(existing.image, origin)) {
     return fail('Envie uma foto WebP válida de até 250 KB.');
   }
-  const values = [product.name, product.category, product.description, product.usage, product.selection, product.care, image, product.price, product.available ? 1 : 0];
+  const values = [product.name, product.category, product.description, product.usage || existing?.usage || '', product.selection || existing?.selection || '', product.care || existing?.care || '', image, product.price, product.available ? 1 : 0, product.stockQuantity];
+  const illustrative = uploadedKey ? 0 : existing?.illustrative || 0;
+  const crop = uploadedKey ? [null,null,null,null] : [existing?.image_col ?? null,existing?.image_row ?? null,existing?.image_cols ?? null,existing?.image_rows ?? null];
   try {
     if (request.method === 'POST') {
-      await db.prepare('INSERT INTO shop_products (id, name, category, description, usage, selection, care, image, price, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, ...values).run();
+      await db.prepare('INSERT INTO shop_products (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, illustrative, image_col, image_row, image_cols, image_rows) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, ...values, illustrative, ...crop).run();
     } else {
-      await db.prepare('UPDATE shop_products SET name = ?, category = ?, description = ?, usage = ?, selection = ?, care = ?, image = ?, price = ?, available = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(...values, id).run();
+      await db.prepare('UPDATE shop_products SET name = ?, category = ?, description = ?, usage = ?, selection = ?, care = ?, image = ?, price = ?, available = ?, stock_quantity = ?, illustrative = ?, image_col = ?, image_row = ?, image_cols = ?, image_rows = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(...values, illustrative, ...crop, id).run();
     }
   } catch (error) {
     if (uploadedKey) await bucket.delete(uploadedKey).catch(() => {});
@@ -392,6 +401,14 @@ async function api(request, env, path) {
   if (path === '/api/admin/products' && request.method === 'POST') return env.BUCKET ? writeShopProduct(db, env.BUCKET, request) : fail('Fotos temporariamente indisponíveis.', 503);
   const shopProduct = path.match(/^\/api\/admin\/products\/([0-9a-f-]{36})$/);
   if (shopProduct && request.method === 'PUT') return env.BUCKET ? writeShopProduct(db, env.BUCKET, request, shopProduct[1]) : fail('Fotos temporariamente indisponíveis.', 503);
+  const stockProduct = path.match(/^\/api\/admin\/products\/([0-9a-f-]{36})\/stock$/);
+  if (stockProduct && request.method === 'PATCH') {
+    let body;
+    try { body = await readBody(request); } catch { return fail('Dados inválidos.'); }
+    if (body.stockQuantity !== null && (!Number.isInteger(body.stockQuantity) || body.stockQuantity < 0 || body.stockQuantity > 999999)) return fail('Informe uma quantidade válida.');
+    const result = await db.prepare('UPDATE shop_products SET stock_quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(body.stockQuantity, stockProduct[1]).run();
+    return result.meta?.changes ? json({ok:true}) : fail('Produto não encontrado.',404);
+  }
   if (shopProduct && request.method === 'DELETE') {
     const existing = await first(db, 'SELECT image FROM shop_products WHERE id = ?', shopProduct[1]);
     if (!existing) return fail('Produto não encontrado.', 404);
