@@ -124,19 +124,16 @@ function renderProducts() {
     label.textContent = categoryLabels[product.category] || product.categoryLabel || product.category;
     const title = document.createElement('h3');
     title.textContent = product.name;
-    const summary = document.createElement('p');
-    summary.className = 'product-summary';
-    summary.textContent = product.description;
     if (product.flavors?.length) {
       const flavors = document.createElement('p');
       flavors.className = 'product-flavor-count';
       flavors.textContent = `${product.flavors.length} sabores · escolha nos detalhes`;
-      info.append(label, title, summary, flavors);
+      info.append(label, title, flavors);
     } else if (product.sizes?.length) {
       const sizes = document.createElement('p');
       sizes.className = 'product-flavor-count';
       sizes.textContent = `${product.sizes.length} tamanhos · escolha nos detalhes`;
-      info.append(label, title, summary, sizes);
+      info.append(label, title, sizes);
     }
     const price = document.createElement('strong');
     price.className = 'product-price';
@@ -149,7 +146,7 @@ function renderProducts() {
     button.textContent = 'Ver detalhes';
     button.setAttribute('aria-label', `Ver detalhes: ${product.name}`);
     button.addEventListener('click', () => openProduct(product));
-    if (!product.flavors?.length && !product.sizes?.length) info.append(label, title, summary);
+    if (!product.flavors?.length && !product.sizes?.length) info.append(label, title);
     info.append(price, stock, button);
     card.append(photo, info);
     grid.append(card);
