@@ -148,7 +148,7 @@ form.addEventListener('submit', async event => {
   if (![10, 11].includes(String(payload.phone || '').replace(/\D/g, '').length)) { showMessage('Confira o WhatsApp com DDD.'); return; }
   if (requestMode) { prepareWhatsAppRequest(payload); return; }
   submitButton.disabled = true;
-  submitButton.firstChild.textContent = 'Enviando solicitação '; 
+  submitButton.textContent = 'Enviando solicitação';
   try {
     const booking = await api('/api/appointments', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
     form.hidden = true;
@@ -173,7 +173,7 @@ form.addEventListener('submit', async event => {
     if (/horário/i.test(error.message)) loadTimes();
   } finally {
     submitButton.disabled = false;
-    submitButton.firstChild.textContent = 'Solicitar horário ';
+    submitButton.textContent = 'Solicitar horário';
   }
 });
 

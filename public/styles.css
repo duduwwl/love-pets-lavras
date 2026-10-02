@@ -198,3 +198,15 @@ h1,h2,.hero h1{letter-spacing:-.04em}
 .dialog-flavor-field[hidden]{display:none}
 .dialog-flavor-field label{display:block;font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px}
 .dialog-flavor-field select{width:100%;min-height:46px;padding:10px 14px;border:1px solid #cfbba1;border-radius:10px;background:#fff;color:var(--ink);font:inherit}
+
+@media(max-width:520px){.header-inner{gap:10px}.logo-link img{width:130px}.header-slogan{flex:1;min-width:0;max-width:none;margin:0;font-size:15px;line-height:1.05;text-align:center}.menu-toggle{flex:none}}
+@media(max-width:360px){.logo-link img{width:118px}.header-slogan{font-size:14px}}
+@media(max-width:480px){.shop-page .product-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Home emphasis: warm red editorial band with a mix of dog and cat paw prints. */
+.intro{width:100%;max-width:none;margin-inline:0;padding-inline:max(4vw,44px);background:var(--red);color:#fff8ed}
+.intro .eyebrow{color:#ffc78f}
+.intro h2{color:#fff8ed}
+.intro h2 em{color:#ffc78f}
+.intro>p{color:#ffe7d7;border-left-color:#ffc78f}
+@media(max-width:680px){.intro{padding-inline:18px}}

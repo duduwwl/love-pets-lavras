@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420">
-  <defs><g id="paw" fill="#ffc78f"><ellipse cx="-22" cy="-12" rx="9" ry="12" transform="rotate(-25 -22 -12)"/><ellipse cx="-8" cy="-27" rx="9" ry="12" transform="rotate(-8 -8 -27)"/><ellipse cx="10" cy="-27" rx="9" ry="12" transform="rotate(12 10 -27)"/><ellipse cx="24" cy="-12" rx="9" ry="12" transform="rotate(28 24 -12)"/><path d="M-24 18C-28 4-11-9 0-7C11-9 28 4 24 18C20 31 8 19 0 20C-8 19-20 31-24 18Z"/></g></defs>
+  <defs><g id="paw" fill="#ffc78f"><ellipse cx="-22" cy="-12" rx="9" ry="12" transform="rotate(-25 -22 -12)"/><ellipse cx="-8" cy="-27" rx="9" ry="12" transform="rotate(-8 -8 -27)"/><ellipse cx="10" cy="-27" rx="9" ry="12" transform="rotate(12 10 -27)"/><ellipse cx="24" cy="-12" rx="9" ry="12" transform="rotate(28 24 -12)"/><path d="M-24 18C-28 4-11-9 0-7C11-9 28 4 24 18C20 31 8 19 0 20C-8 19-20 31-24 18Z"/></g><g id="catpaw" fill="#ffc78f"><circle cx="-18" cy="-18" r="8"/><circle cx="-5" cy="-29" r="8"/><circle cx="9" cy="-29" r="8"/><circle cx="22" cy="-17" r="8"/><path d="M-22 8C-22-3-12-11 0-10C12-11 22-3 22 8C22 20 11 22 0 18C-11 22-22 20-22 8Z"/></g></defs>
   <use href="#paw" transform="translate(75 65) rotate(-24) scale(.72)"/>
-  <use href="#paw" transform="translate(270 185) rotate(20) scale(1.06)"/>
+  <use href="#catpaw" transform="translate(270 185) rotate(20) scale(1.06)"/>
   <use href="#paw" transform="translate(95 350) rotate(-8) scale(.88)"/>
+  <use href="#catpaw" transform="translate(310 365) rotate(-12) scale(.65)"/>
 </svg>
