@@ -174,7 +174,7 @@ document.querySelector('#block-form').addEventListener('submit', async event => 
   catch (error) { tell(error.message); }
 });
 
-document.querySelector('#copy-calendar').addEventListener('click', async () => {
+document.querySelector('#copy-calendar')?.addEventListener('click', async () => {
   try {
     const data = await api('/api/admin/calendar-url');
     if (data.calendarText) {

@@ -14,7 +14,7 @@ productSection.id = 'produtos';
 productSection.style.marginTop = '20px';
 productSection.innerHTML = `<div class="panel-heading"><div><span class="panel-kicker">LOJA</span><h2>Produtos da loja</h2></div></div>
   <p class="panel-help">${productDemo
-    ? 'Esta é uma demonstração: os produtos salvos aparecem apenas neste navegador. Para publicar para todos, use o painel protegido da equipe.'
+    ? 'Os produtos da loja já aparecem aqui. Ajuste o estoque de cada item; nesta demonstração, as alterações ficam apenas neste navegador.'
     : 'Os produtos fotografados estão cadastrados com estoque a conferir. Atualize preço e quantidade aqui; novos produtos publicados aparecem na loja.'}</p>
   ${productDemo ? '<p class="team-note">As alterações da demonstração ficam apenas neste navegador e não pedem acesso à conta real.</p>' : ''}
   <form id="product-form" class="product-form">
@@ -39,6 +39,7 @@ const productPhoto = productForm.elements.photo;
 let managedProducts = [];
 let uploadedImage = '';
 const productDemoKey = 'love-pets-demo-products-v1';
+const productDemoSeedKey = 'love-pets-demo-products-seeded-v1';
 
 function productTell(message, success = false) {
   productMessage.textContent = message;
@@ -48,7 +49,26 @@ function productTell(message, success = false) {
 async function productsApi(path, options = {}) {
   if (productDemo) {
     let items;
-    try { items = JSON.parse(localStorage.getItem(productDemoKey) || '[]'); } catch { items = []; }
+    const stored = localStorage.getItem(productDemoKey);
+    const shouldSeed = stored === null || (stored === '[]' && !localStorage.getItem(productDemoSeedKey));
+    if (shouldSeed) {
+      const catalogUrl = `${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`;
+      const response = await fetch(catalogUrl, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Não foi possível carregar os produtos da loja.');
+      const catalog = await response.json();
+      const base = window.LOVE_PETS_PUBLIC_BASE || '/';
+      items = catalog.map(product => ({
+        ...product,
+        image: product.image?.startsWith('/assets/') ? `${base}${product.image.slice(1)}` : product.image,
+        available: product.available !== false,
+        stockQuantity: product.stockQuantity ?? null,
+        flavors: Array.isArray(product.flavors) ? product.flavors : [],
+      }));
+      localStorage.setItem(productDemoKey, JSON.stringify(items));
+      localStorage.setItem(productDemoSeedKey, '1');
+    } else {
+      try { items = JSON.parse(stored); } catch { items = []; }
+    }
     if (options.method === 'POST') items.unshift({ ...JSON.parse(options.body), id: crypto.randomUUID() });
     if (options.method === 'PUT') items = items.map(item => item.id === path.split('/').pop() ? { ...JSON.parse(options.body), id: item.id } : item);
     if (options.method === 'PATCH') items = items.map(item => item.id === path.split('/').at(-2) ? { ...item, ...JSON.parse(options.body) } : item);
