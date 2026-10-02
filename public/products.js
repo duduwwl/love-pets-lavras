@@ -185,23 +185,36 @@ const loadStaticCatalog = () => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/' }pr
   .then(response => response.ok ? response.json() : [])
   .catch(() => []);
 
-fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(10000), cache: 'no-store' })
-  .then(response => { if (!response.ok) throw new Error('live products'); return response.json(); })
-  .then(data => { if (!Array.isArray(data.products)) throw new Error('live products'); return data.products; })
-  .catch(() => loadStaticCatalog())
-  .then(items => loadStaticCatalog().then(localItems => ({ items, localItems })))
-  .then(({ items, localItems }) => {
-    const localById = new Map(localItems.map(item => [item.id, item]));
-    products = items.map(item => {
-      const local = localById.get(item.id) || {};
-      const merged = { ...item, ...local, categoryLabel: categoryLabels[item.category] || local.categoryLabel || item.categoryLabel };
-      if (item.stockQuantity != null) merged.stockQuantity = item.stockQuantity;
-      else if (local.stockQuantity != null) merged.stockQuantity = local.stockQuantity;
-      if (!merged.sizes?.length && merged.name.startsWith('Fraldas')) merged.sizes = ['P', 'M', 'G'];
-      return merged;
-    });
-    if (!products.length) { grid.textContent = 'Nenhum produto disponível no momento. Fale com a Love Pets pelo WhatsApp.'; return; }
-    renderCategories();
-    renderProducts();
-  })
-  .catch(() => { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; });
+function mergeCatalog(items, localItems = items) {
+  const localById = new Map(localItems.map(item => [item.id, item]));
+  return items.map(item => {
+    const local = localById.get(item.id) || {};
+    const merged = { ...item, ...local, categoryLabel: categoryLabels[item.category] || local.categoryLabel || item.categoryLabel };
+    if (item.stockQuantity != null) merged.stockQuantity = item.stockQuantity;
+    else if (local.stockQuantity != null) merged.stockQuantity = local.stockQuantity;
+    if (!merged.sizes?.length && merged.name.startsWith('Fraldas')) merged.sizes = ['P', 'M', 'G'];
+    return merged;
+  });
+}
+
+function showCatalog(items, localItems = items) {
+  products = mergeCatalog(items, localItems);
+  if (!products.length) { grid.textContent = 'Nenhum produto disponível no momento. Fale com a Love Pets pelo WhatsApp.'; return; }
+  renderCategories();
+  renderProducts();
+}
+
+async function loadCatalog() {
+  const localItems = await loadStaticCatalog();
+  if (localItems.length) showCatalog(localItems, localItems);
+  try {
+    const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(4000), cache: 'no-store' });
+    if (!response.ok) throw new Error('live products');
+    const data = await response.json();
+    if (Array.isArray(data.products) && data.products.length) showCatalog(data.products, localItems);
+  } catch {
+    if (!localItems.length) throw new Error('products unavailable');
+  }
+}
+
+loadCatalog().catch(() => { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; });
