@@ -69,10 +69,6 @@ async function productsApi(path, options = {}) {
       localStorage.setItem(productDemoSeedKey, '1');
     } else {
       try { items = JSON.parse(stored); } catch { items = []; }
-      if (Array.isArray(items) && items.some(item => /^teste(?:\s+\d+)?$/i.test(item?.name?.trim() || ''))) {
-        items = items.filter(item => !/^teste(?:\s+\d+)?$/i.test(item?.name?.trim() || ''));
-        localStorage.setItem(productDemoKey, JSON.stringify(items));
-      }
     }
     if (options.method === 'POST') items.unshift({ ...JSON.parse(options.body), id: crypto.randomUUID() });
     if (options.method === 'PUT') items = items.map(item => item.id === path.split('/').pop() ? { ...JSON.parse(options.body), id: item.id } : item);
