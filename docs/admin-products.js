@@ -69,6 +69,10 @@ async function productsApi(path, options = {}) {
       localStorage.setItem(productDemoSeedKey, '1');
     } else {
       try { items = JSON.parse(stored); } catch { items = []; }
+      if (Array.isArray(items) && items.some(item => item?.name?.trim().toLocaleLowerCase('pt-BR') === 'teste')) {
+        items = items.filter(item => item?.name?.trim().toLocaleLowerCase('pt-BR') !== 'teste');
+        localStorage.setItem(productDemoKey, JSON.stringify(items));
+      }
     }
     if (options.method === 'POST') items.unshift({ ...JSON.parse(options.body), id: crypto.randomUUID() });
     if (options.method === 'PUT') items = items.map(item => item.id === path.split('/').pop() ? { ...JSON.parse(options.body), id: item.id } : item);
