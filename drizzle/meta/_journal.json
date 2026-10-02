@@ -57,6 +57,13 @@
       "when": 1790905800000,
       "tag": "0007_fit_stock",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790909400000,
+      "tag": "0008_catalog_prices",
+      "breakpoints": true
     }
   ]
 }

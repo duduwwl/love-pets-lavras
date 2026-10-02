@@ -56,5 +56,27 @@ oneByOne.name = 'OneByOne Fit 50 g';
 oneByOne.description = 'Snack mastigável OneByOne Fit para cães, 50 g. Escolha entre Maçã com cenoura e quinoa, Manga com beterraba e linhaça ou Morango com batata-doce e chia.';
 oneByOne.stockQuantity = 10;
 oneByOne.flavors = ['Maçã', 'Manga', 'Morango'];
+const priceOverrides = {
+  'Escovas dentais para pets': 10, 'Pet Clean Creme Dental Tutti 90 g': 20, 'Pet Clean Hidrata Focinhos 60 g': 30,
+  'Comedouro plástico com base': 20, 'Pet Clean Creme Dental Carne 60 g': 20, 'Pet Kiss Educador Pipi Não Pode 150 ml': 25,
+  'Pet Clean Banho a Seco Maciez 240 ml': 40, 'OneByOne Fit 50 g': 15, 'Pet Clean Hidratante de Patinhas 150 g': 20,
+  'Pet Clean Limpa Patas 120 ml': 30, 'Mantinhas de fleece Love Pets': 20, 'Caixa de transporte rosa': 40,
+  'Arranhador vermelho para gatos': 60, 'Peitoral com guia verde': 60, 'Benetto Tapetes Higiênicos 28 un.': 5,
+  'Fraldas descartáveis para pets': 15, 'Brinquedos variados para pets': 10, 'Petisco mastigável natural para cães': 20,
+  'Papaya Pets Cuidado Oral 45 g': 25, 'Caminha xadrez Love Pets': 80, 'Pet Clean Shampoo Filhote 700 ml': 20,
+  'Pet Clean Shampoo 5 em 1 700 ml': 20, 'Pet Clean Shampoo Neutro 700 ml': 20, 'Pet Clean Condicionador 700 ml': 20,
+};
+const nameOverrides = {
+  'Mantinhas de fleece Love Pets': 'Mantinhas Love Pets',
+  'Petisco mastigável natural para cães': 'Petiscos Variados',
+  'Papaya Pets Cuidado Oral 45 g': 'Petisco Cuidado Oral',
+};
+for (const product of products) {
+  if (priceOverrides[product.name] !== undefined) product.price = `R$ ${priceOverrides[product.name].toFixed(2).replace('.', ',')} · ilustrativo`;
+  if (nameOverrides[product.name]) product.name = nameOverrides[product.name];
+}
+const diapers = products.find(item => item.id === '10000000-0000-4000-8000-000000000019');
+diapers.description = 'Pacotes de fraldas para pets nos tamanhos P, M e G, conforme a disponibilidade.';
+diapers.sizes = ['P', 'M', 'G'];
 writeFileSync('public/products.json', JSON.stringify(products, null, 2) + '\n');
 console.log(`Prepared ${products.length} real catalog items from 23 photographs.`);

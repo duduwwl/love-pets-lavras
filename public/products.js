@@ -38,12 +38,15 @@ function openProduct(product) {
   const flavorField = dialog.querySelector('.dialog-flavor-field');
   const flavorSelect = dialog.querySelector('#dialog-flavor');
   const flavors = Array.isArray(product.flavors) ? product.flavors : [];
-  flavorField.hidden = flavors.length === 0;
+  const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+  const choices = flavors.length ? flavors : sizes;
+  flavorField.hidden = choices.length === 0;
+  flavorField.querySelector('label').textContent = flavors.length ? 'Escolha o sabor' : 'Escolha o tamanho';
   flavorSelect.replaceChildren();
-  for (const flavor of flavors) {
+  for (const choice of choices) {
     const option = document.createElement('option');
-    option.value = flavor;
-    option.textContent = flavor;
+    option.value = choice;
+    option.textContent = choice;
     flavorSelect.append(option);
   }
   const details = dialog.querySelector('.dialog-details');
@@ -70,7 +73,8 @@ function openProduct(product) {
   const dialogVisual = dialog.querySelector('.dialog-visual');
   function updateWhatsApp() {
     setFlavorImage(dialogVisual, product, flavorSelect.value);
-    const requestedProduct = `${product.name}${flavors.length ? `, sabor ${flavorSelect.value}` : ''}`;
+    const choiceLabel = flavors.length ? 'sabor' : 'tamanho';
+    const requestedProduct = `${product.name}${choices.length ? `, ${choiceLabel} ${flavorSelect.value}` : ''}`;
     const message = product.stockQuantity === 0
       ? `Olá! Gostaria de saber quando ${requestedProduct} estará disponível novamente na Love Pets.`
       : `Olá, Love Pets! Tenho interesse em ${requestedProduct}. Podem confirmar o preço atual, a disponibilidade e como retirar?`;
@@ -86,7 +90,7 @@ function matchingProducts() {
   return products.filter(product => {
     if (currentCategory !== 'all' && product.category !== currentCategory) return false;
     if (!query) return true;
-    const text = [product.name, product.description, ...(product.flavors || []), categoryLabels[product.category] || product.category]
+    const text = [product.name, product.description, ...(product.flavors || []), ...(product.sizes || []), categoryLabels[product.category] || product.category]
       .join(' ').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return text.includes(query);
   });
@@ -130,6 +134,11 @@ function renderProducts() {
       flavors.className = 'product-flavor-count';
       flavors.textContent = `${product.flavors.length} sabores · escolha nos detalhes`;
       info.append(label, title, summary, flavors);
+    } else if (product.sizes?.length) {
+      const sizes = document.createElement('p');
+      sizes.className = 'product-flavor-count';
+      sizes.textContent = `${product.sizes.length} tamanhos · escolha nos detalhes`;
+      info.append(label, title, summary, sizes);
     }
     const price = document.createElement('strong');
     price.className = 'product-price';
@@ -142,7 +151,7 @@ function renderProducts() {
     button.textContent = 'Ver detalhes';
     button.setAttribute('aria-label', `Ver detalhes: ${product.name}`);
     button.addEventListener('click', () => openProduct(product));
-    if (!product.flavors?.length) info.append(label, title, summary);
+    if (!product.flavors?.length && !product.sizes?.length) info.append(label, title, summary);
     info.append(price, stock, button);
     card.append(photo, info);
     grid.append(card);
@@ -172,16 +181,25 @@ search.addEventListener('input', renderProducts);
 dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
 dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
 
+const loadStaticCatalog = () => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/' }products.json`, { cache: 'no-store' })
+  .then(response => response.ok ? response.json() : [])
+  .catch(() => []);
+
 fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(10000), cache: 'no-store' })
   .then(response => { if (!response.ok) throw new Error('live products'); return response.json(); })
   .then(data => { if (!Array.isArray(data.products)) throw new Error('live products'); return data.products; })
-  .catch(() => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`).then(response => { if (!response.ok) throw new Error('products'); return response.json(); }))
-  .then(items => {
-    products = items.map(item => ({
-      ...item,
-      categoryLabel: categoryLabels[item.category] || item.categoryLabel,
-      stockQuantity: item.stockQuantity == null && item.name.startsWith('OneByOne Fit') ? 10 : item.stockQuantity,
-    }));
+  .catch(() => loadStaticCatalog())
+  .then(items => loadStaticCatalog().then(localItems => ({ items, localItems })))
+  .then(({ items, localItems }) => {
+    const localById = new Map(localItems.map(item => [item.id, item]));
+    products = items.map(item => {
+      const local = localById.get(item.id) || {};
+      const merged = { ...item, ...local, categoryLabel: categoryLabels[item.category] || local.categoryLabel || item.categoryLabel };
+      if (item.stockQuantity != null) merged.stockQuantity = item.stockQuantity;
+      else if (local.stockQuantity != null) merged.stockQuantity = local.stockQuantity;
+      if (!merged.sizes?.length && merged.name.startsWith('Fraldas')) merged.sizes = ['P', 'M', 'G'];
+      return merged;
+    });
     if (!products.length) { grid.textContent = 'Nenhum produto disponível no momento. Fale com a Love Pets pelo WhatsApp.'; return; }
     renderCategories();
     renderProducts();
