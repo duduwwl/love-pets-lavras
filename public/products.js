@@ -185,8 +185,8 @@ function loadDemoCatalog() {
   if (stored === null) return null;
   try {
     let items = JSON.parse(stored);
-    if (Array.isArray(items) && items.some(item => item?.name?.trim().toLocaleLowerCase('pt-BR') === 'teste')) {
-      items = items.filter(item => item?.name?.trim().toLocaleLowerCase('pt-BR') !== 'teste');
+    if (Array.isArray(items) && items.some(item => /^teste(?:\s+\d+)?$/i.test(item?.name?.trim() || ''))) {
+      items = items.filter(item => !/^teste(?:\s+\d+)?$/i.test(item?.name?.trim() || ''));
       localStorage.setItem('love-pets-demo-products-v1', JSON.stringify(items));
     }
     return Array.isArray(items) ? items : [];

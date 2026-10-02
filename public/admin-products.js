@@ -69,8 +69,8 @@ async function productsApi(path, options = {}) {
       localStorage.setItem(productDemoSeedKey, '1');
     } else {
       try { items = JSON.parse(stored); } catch { items = []; }
-      if (Array.isArray(items) && items.some(item => item?.name?.trim().toLocaleLowerCase('pt-BR') === 'teste')) {
-        items = items.filter(item => item?.name?.trim().toLocaleLowerCase('pt-BR') !== 'teste');
+      if (Array.isArray(items) && items.some(item => /^teste(?:\s+\d+)?$/i.test(item?.name?.trim() || ''))) {
+        items = items.filter(item => !/^teste(?:\s+\d+)?$/i.test(item?.name?.trim() || ''));
         localStorage.setItem(productDemoKey, JSON.stringify(items));
       }
     }
