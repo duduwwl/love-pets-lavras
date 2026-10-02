@@ -180,6 +180,18 @@ const loadStaticCatalog = () => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/' }pr
   .then(response => response.ok ? response.json() : [])
   .catch(() => []);
 
+function loadDemoCatalog() {
+  if (!window.LOVE_PETS_DEMO_API) return null;
+  const stored = localStorage.getItem('love-pets-demo-products-v1');
+  if (stored === null) return null;
+  try {
+    const items = JSON.parse(stored);
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
+
 function mergeCatalog(items, localItems = items) {
   const localById = new Map(localItems.map(item => [item.id, item]));
   return items.map(item => {
@@ -200,6 +212,11 @@ function showCatalog(items, localItems = items) {
 }
 
 async function loadCatalog() {
+  const demoItems = loadDemoCatalog();
+  if (demoItems !== null) {
+    showCatalog(demoItems, demoItems);
+    return;
+  }
   const localItems = await loadStaticCatalog();
   if (localItems.length) showCatalog(localItems, localItems);
   try {
@@ -211,5 +228,17 @@ async function loadCatalog() {
     if (!localItems.length) throw new Error('products unavailable');
   }
 }
+
+window.addEventListener('storage', event => {
+  if (event.key !== 'love-pets-demo-products-v1') return;
+  const demoItems = loadDemoCatalog();
+  if (demoItems !== null) showCatalog(demoItems, demoItems);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  const demoItems = loadDemoCatalog();
+  if (demoItems !== null) showCatalog(demoItems, demoItems);
+});
 
 loadCatalog().catch(() => { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; });

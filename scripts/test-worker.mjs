@@ -114,6 +114,7 @@ assert(originalCatalog.every(item => item.id.startsWith('10000000-')));
 assert(originalCatalog.every(item => !item.price.includes('ilustrativo')));
 const fitProduct=originalCatalog.find(item=>item.id==='10000000-0000-4000-8000-000000000008');
 assert.deepEqual(fitProduct.flavors,['Maçã','Manga','Morango']);
+assert.deepEqual(fitProduct.sizes,[]);
 assert.equal(fitProduct.stockQuantity,10);
 assert.equal(originalCatalog.filter(item=>item.name.startsWith('OneByOne Fit')).length,1);
 assert.equal(originalCatalog[0].stockQuantity,null);
@@ -122,7 +123,7 @@ assert.equal((await data(await call('/api/products'))).products.find(item=>item.
 assert.equal((await call(`/api/admin/products/${originalCatalog[0].id}/stock`, {method:'PATCH',headers:adminHeaders,body:{stockQuantity:3}})).status,200);
 assert.equal((await data(await call('/api/products'))).products.find(item=>item.id===originalCatalog[0].id).stockQuantity,3);
 assert.equal((await call(`/api/admin/products/${originalCatalog[0].id}/stock`, {method:'PATCH',headers:adminHeaders,body:{stockQuantity:-1}})).status,400);
-const product = { name:'Caminha de teste',category:'descanso',description:'Caminha macia',image:photo,price:'R$ 50',available:true,stockQuantity:5,flavors:['Baunilha','Mel'] };
+const product = { name:'Caminha de teste',category:'descanso',description:'Caminha macia',image:photo,price:'R$ 50',available:true,stockQuantity:5,flavors:['Baunilha','Mel'],sizes:['P','M'] };
 assert.equal((await call('/api/admin/products', { method:'POST', body: product })).status,401);
 const createdProduct = await data(await call('/api/admin/products', { method:'POST',headers:adminHeaders,body:product }));
 assert.match(createdProduct.id,/^[0-9a-f-]{36}$/);
@@ -130,6 +131,7 @@ assert.equal((await data(await crossOrigin('/api/products'))).products.length,26
 assert.equal((await crossOrigin('/api/products')).headers.get('access-control-allow-origin'),pagesOrigin);
 const publicProduct = (await data(await call('/api/products'))).products.find(item=>item.id===createdProduct.id);
 assert.deepEqual(publicProduct.flavors,['Baunilha','Mel']);
+assert.deepEqual(publicProduct.sizes,['P','M']);
 assert.match(publicProduct.image, /\/api\/product-images\/[0-9a-f-]{36}\.webp$/);
 assert.equal((await call(new URL(publicProduct.image).pathname)).headers.get('content-type'),'image/webp');
 assert.equal(storedPhotos.size,1);

@@ -305,14 +305,17 @@ const PRODUCT_CATEGORIES = new Set(['higiene', 'petiscos', 'alimentacao', 'passe
 function productInput(body) {
   if (!body || !PRODUCT_CATEGORIES.has(body.category)) return null;
   if (body.flavors !== undefined && !Array.isArray(body.flavors)) return null;
+  if (body.sizes !== undefined && !Array.isArray(body.sizes)) return null;
   const flavors = [...new Set((body.flavors || []).map(value => typeof value === 'string' ? value.trim() : ''))];
+  const sizes = [...new Set((body.sizes || []).map(value => typeof value === 'string' ? value.trim() : ''))];
   if (flavors.length > 12 || flavors.some(value => !value || value.length > 40)) return null;
+  if (sizes.length > 12 || sizes.some(value => !value || value.length > 40)) return null;
   const product = {
     name: clean(body.name, 100), category: body.category,
     description: clean(body.description, 450), usage: clean(body.usage, 300),
     selection: clean(body.selection, 300), care: clean(body.care, 300),
     price: clean(body.price, 40), available: body.available !== false,
-    stockQuantity: body.stockQuantity, flavors,
+    stockQuantity: body.stockQuantity, flavors, sizes,
   };
   if (!product.name || !product.description || !product.price || (product.stockQuantity !== null && (!Number.isInteger(product.stockQuantity) || product.stockQuantity < 0 || product.stockQuantity > 999999))) return null;
   return product;
@@ -333,10 +336,10 @@ async function ensureCatalogSeeded(db) {
   const oldIds = Array.from({ length: 22 }, (_, index) => `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`);
   const statements = [db.prepare(`DELETE FROM shop_products WHERE id IN (${oldIds.map(() => '?').join(',')})`).bind(...oldIds)];
   statements.push(...catalogSeed.map(item => db.prepare(`INSERT OR IGNORE INTO shop_products
-    (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, flavors, illustrative, image_col, image_row, image_cols, image_rows)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+    (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, flavors, sizes, illustrative, image_col, image_row, image_cols, image_rows)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
     item.id, item.name, item.category, item.description, item.usage, item.selection, item.care,
-    item.image, item.price, 1, item.stockQuantity ?? null, JSON.stringify(item.flavors || []), 0, null, null, null, null,
+    item.image, item.price, 1, item.stockQuantity ?? null, JSON.stringify(item.flavors || []), JSON.stringify(item.sizes || []), 0, null, null, null, null,
   )));
   statements.push(db.prepare('INSERT OR IGNORE INTO catalog_bootstrap (key) VALUES (?)').bind('real-catalog-v2'));
   await db.batch(statements);
@@ -344,13 +347,13 @@ async function ensureCatalogSeeded(db) {
 
 async function listShopProducts(db, origin, includeUnavailable = false) {
   await ensureCatalogSeeded(db);
-  const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available, stock_quantity, flavors, illustrative, image_col, image_row, image_cols, image_rows
+  const sql = `SELECT id, name, category, description, usage, selection, care, image, price, available, stock_quantity, flavors, sizes, illustrative, image_col, image_row, image_cols, image_rows
     FROM shop_products ${includeUnavailable ? '' : 'WHERE available = 1'} ORDER BY created_at DESC`;
   return (await rows(db, sql)).map(item => ({
     id:item.id, name:item.name, category:item.category, description:item.description,
     usage:item.usage, selection:item.selection, care:item.care,
     image:productImageUrl(item.image, origin), price:item.price, available:!!item.available,
-    stockQuantity:item.stock_quantity, flavors:JSON.parse(item.flavors || '[]'), illustrative:!!item.illustrative,
+    stockQuantity:item.stock_quantity, flavors:JSON.parse(item.flavors || '[]'), sizes:JSON.parse(item.sizes || '[]'), illustrative:!!item.illustrative,
     col:item.image_col, row:item.image_row, cols:item.image_cols, rows:item.image_rows,
   }));
 }
@@ -374,14 +377,14 @@ async function writeShopProduct(db, bucket, request, id = crypto.randomUUID()) {
   } else if (!existing || body.image !== productImageUrl(existing.image, origin)) {
     return fail('Envie uma foto WebP válida de até 250 KB.');
   }
-  const values = [product.name, product.category, product.description, product.usage || existing?.usage || '', product.selection || existing?.selection || '', product.care || existing?.care || '', image, product.price, product.available ? 1 : 0, product.stockQuantity, JSON.stringify(product.flavors)];
+  const values = [product.name, product.category, product.description, product.usage || existing?.usage || '', product.selection || existing?.selection || '', product.care || existing?.care || '', image, product.price, product.available ? 1 : 0, product.stockQuantity, JSON.stringify(product.flavors), JSON.stringify(product.sizes)];
   const illustrative = uploadedKey ? 0 : existing?.illustrative || 0;
   const crop = uploadedKey ? [null,null,null,null] : [existing?.image_col ?? null,existing?.image_row ?? null,existing?.image_cols ?? null,existing?.image_rows ?? null];
   try {
     if (request.method === 'POST') {
-      await db.prepare('INSERT INTO shop_products (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, flavors, illustrative, image_col, image_row, image_cols, image_rows) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, ...values, illustrative, ...crop).run();
+      await db.prepare('INSERT INTO shop_products (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, flavors, sizes, illustrative, image_col, image_row, image_cols, image_rows) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, ...values, illustrative, ...crop).run();
     } else {
-      await db.prepare('UPDATE shop_products SET name = ?, category = ?, description = ?, usage = ?, selection = ?, care = ?, image = ?, price = ?, available = ?, stock_quantity = ?, flavors = ?, illustrative = ?, image_col = ?, image_row = ?, image_cols = ?, image_rows = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(...values, illustrative, ...crop, id).run();
+      await db.prepare('UPDATE shop_products SET name = ?, category = ?, description = ?, usage = ?, selection = ?, care = ?, image = ?, price = ?, available = ?, stock_quantity = ?, flavors = ?, sizes = ?, illustrative = ?, image_col = ?, image_row = ?, image_cols = ?, image_rows = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(...values, illustrative, ...crop, id).run();
     }
   } catch (error) {
     if (uploadedKey) await bucket.delete(uploadedKey).catch(() => {});

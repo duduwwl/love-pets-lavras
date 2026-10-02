@@ -45,6 +45,11 @@ assert(demo.includes('PAINEL DE DEMONSTRAÇÃO'));
 assert(demo.includes(`${base}demo-admin-data.js`));
 assert(demo.includes(`${base}admin.js`));
 assert(demo.includes(`${base}admin-products.js`));
+assert(!demo.includes('Calendário externo'));
+const adminProducts=readFileSync(join(root,'admin-products.js'),'utf8');
+assert(adminProducts.includes('products.json'));
+assert(adminProducts.includes('name="sizes"'));
+assert(adminProducts.includes('stockQuantity'));
 const admin=readFileSync(join(root,'admin/index.html'),'utf8');
 assert(admin.includes('url=https://love-pets-lavras.duduwwl.chatgpt.site/admin'));
 assert(!admin.includes('demo-admin-data.js'));
@@ -69,6 +74,7 @@ for(const product of products){
  assert.equal(product.illustrative,false);
 }
 assert(readFileSync(join(root,'products.js'),'utf8').includes("/api/products"));
+assert(readFileSync(join(root,'products.js'),'utf8').includes('love-pets-demo-products-v1'));
 assert(!existsSync(join(root,'admin.html')));
 assert(existsSync(join(root,'admin.js')));
 assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));

@@ -25,6 +25,7 @@ productSection.innerHTML = `<div class="panel-heading"><div><span class="panel-k
     <label>Preço<input name="price" required maxlength="40" placeholder="Ex.: R$ 49,90"></label>
     <label>Quantidade em estoque<input name="stockQuantity" type="number" min="0" max="999999" step="1" placeholder="Informe quando souber"></label>
     <label class="full">Sabores (separados por vírgula)<input name="flavors" maxlength="500" placeholder="Ex.: Maçã, Manga, Morango"></label>
+    <label class="full">Tamanhos (opcional, separados por vírgula)<input name="sizes" maxlength="240" placeholder="Ex.: P, M, G"></label>
     <label>Foto do produto<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"><img id="product-preview" class="product-preview" hidden alt="Prévia da foto"></label>
     <label class="full"><input name="available" type="checkbox" checked style="display:inline;width:auto;min-height:0;margin:0 7px 0 0">Disponível para pedidos</label>
     <div class="full"><button class="admin-save" type="submit">${productDemo ? 'Salvar exemplo' : 'Publicar produto'}</button> <button id="cancel-product-edit" type="button" hidden>Cancelar edição</button></div>
@@ -97,7 +98,7 @@ function renderManagedProducts() {
     const photo = document.createElement('img'); photo.src = product.image; photo.alt = '';
     const info = document.createElement('div');
     const name = document.createElement('strong'); name.textContent = product.name;
-    const detail = document.createElement('span'); detail.textContent = `${productCategories[product.category] || product.category} · ${product.available ? 'Publicado' : 'Oculto'} · ${product.stockQuantity == null ? 'Estoque não informado' : `${product.stockQuantity} em estoque`}${product.price ? ' · ' + product.price : ''}${product.flavors?.length ? ' · Sabores: ' + product.flavors.join(', ') : ''}`;
+    const detail = document.createElement('span'); detail.textContent = `${productCategories[product.category] || product.category} · ${product.available ? 'Publicado' : 'Oculto'} · ${product.stockQuantity == null ? 'Estoque não informado' : `${product.stockQuantity} em estoque`}${product.price ? ' · ' + product.price : ''}${product.flavors?.length ? ' · Sabores: ' + product.flavors.join(', ') : ''}${product.sizes?.length ? ' · Tamanhos: ' + product.sizes.join(', ') : ''}`;
     info.append(name, detail);
     const stock = document.createElement('div'); stock.className = 'stock-control';
     const stockLabel = document.createElement('label'); stockLabel.textContent = 'Estoque';
@@ -117,6 +118,7 @@ function renderManagedProducts() {
       for (const key of ['name','category','description','price']) productForm.elements[key].value = product[key] || '';
       productForm.elements.stockQuantity.value = product.stockQuantity ?? '';
       productForm.elements.flavors.value = (product.flavors || []).join(', ');
+      productForm.elements.sizes.value = (product.sizes || []).join(', ');
       productForm.elements.available.checked = product.available;
       uploadedImage = product.image; productPreview.src = product.image; productPreview.hidden = false;
       productSection.querySelector('#cancel-product-edit').hidden = false;
@@ -170,6 +172,7 @@ productForm.addEventListener('submit', async event => {
   body.image = uploadedImage; body.available = productForm.elements.available.checked;
   body.stockQuantity = productForm.elements.stockQuantity.value === '' ? null : Number(productForm.elements.stockQuantity.value);
   body.flavors = productForm.elements.flavors.value.split(',').map(value => value.trim()).filter(Boolean);
+  body.sizes = productForm.elements.sizes.value.split(',').map(value => value.trim()).filter(Boolean);
   const button = productForm.querySelector('[type=submit]'); button.disabled = true;
   try {
     await productsApi(id ? `/api/admin/products/${id}` : '/api/admin/products', { method: id ? 'PUT' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
