@@ -177,7 +177,11 @@ fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal
   .then(data => { if (!Array.isArray(data.products)) throw new Error('live products'); return data.products; })
   .catch(() => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/'}products.json`).then(response => { if (!response.ok) throw new Error('products'); return response.json(); }))
   .then(items => {
-    products = items.map(item => ({ ...item, categoryLabel: categoryLabels[item.category] || item.categoryLabel }));
+    products = items.map(item => ({
+      ...item,
+      categoryLabel: categoryLabels[item.category] || item.categoryLabel,
+      stockQuantity: item.stockQuantity == null && item.name.startsWith('OneByOne Fit') ? 10 : item.stockQuantity,
+    }));
     if (!products.length) { grid.textContent = 'Nenhum produto disponível no momento. Fale com a Love Pets pelo WhatsApp.'; return; }
     renderCategories();
     renderProducts();
