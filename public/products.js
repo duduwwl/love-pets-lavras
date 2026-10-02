@@ -16,7 +16,19 @@ let currentCategory = 'all';
 
 function setProductImage(element, product) {
   element.style.backgroundImage = `url("${product.image}")`;
+  element.style.backgroundSize = 'cover';
+  element.style.backgroundPosition = 'center';
+  element.style.backgroundRepeat = 'no-repeat';
   element.setAttribute('aria-label', `Foto de ${product.name} com fundo branco`);
+}
+
+function setFlavorImage(element, product, flavor) {
+  setProductImage(element, product);
+  if (!product.flavors?.length || !product.name.startsWith('OneByOne Fit')) return;
+  const positions = { Maçã: 'left center', Manga: 'center center', Morango: 'right center' };
+  element.style.backgroundSize = '300% auto';
+  element.style.backgroundPosition = positions[flavor] || positions.Maçã;
+  element.setAttribute('aria-label', `Foto de ${product.name}, sabor ${flavor}`);
 }
 
 function openProduct(product) {
@@ -55,8 +67,9 @@ function openProduct(product) {
   dialog.querySelector('.dialog-note').textContent = product.price?.includes('ilustrativo')
     ? 'Foto do produto enviada pela loja, com fundo padronizado. Este preço é apenas um exemplo; confirme o valor atual e a disponibilidade.'
     : 'Foto do produto enviada pela loja, com fundo padronizado. Confirme variações e disponibilidade.';
-  setProductImage(dialog.querySelector('.dialog-visual'), product);
+  const dialogVisual = dialog.querySelector('.dialog-visual');
   function updateWhatsApp() {
+    setFlavorImage(dialogVisual, product, flavorSelect.value);
     const requestedProduct = `${product.name}${flavors.length ? `, sabor ${flavorSelect.value}` : ''}`;
     const message = product.stockQuantity === 0
       ? `Olá! Gostaria de saber quando ${requestedProduct} estará disponível novamente na Love Pets.`
