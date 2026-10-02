@@ -36,6 +36,7 @@ function showMessage(message, good = false) {
 }
 
 async function api(url, options) {
+  if (window.LOVE_PETS_DEMO_API) return window.LOVE_PETS_DEMO_API(url, options);
   const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}${url}`, { credentials: 'same-origin', signal: AbortSignal.timeout(10000), ...options });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'A agenda está indisponível no momento.');
@@ -70,7 +71,7 @@ async function loadTimes({ preserveSelection = false } = {}) {
   try {
     const data = await api(`/api/availability?date=${encodeURIComponent(dateElement.value)}&service=${encodeURIComponent(selectedService())}`);
     if (attempt !== loadingTimes) return;
-    if (!data.slots.length) { slotStatus.textContent = 'Sem horários livres neste dia. Experimente outra data.'; return; }
+    if (!data.slots.length) { slotStatus.textContent = data.dayUnavailable ? 'Dia indisponível: todos os horários já estão ocupados. Experimente outra data.' : 'Sem horários livres neste dia. Experimente outra data.'; return; }
     slotStatus.textContent = `${data.slots.length} ${data.slots.length === 1 ? 'horário disponível' : 'horários disponíveis'} · toque para escolher`;
     data.slots.forEach(time => {
       const label = document.createElement('label');
@@ -160,9 +161,10 @@ form.addEventListener('submit', async event => {
     calendarLink.addEventListener('click', async event => {
       event.preventDefault();
       try {
-        const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}${booking.calendarUrl}`, {signal:AbortSignal.timeout(10000)});
-        if (!response.ok) throw new Error('Não foi possível baixar o calendário.');
-        const url = URL.createObjectURL(await response.blob());
+        const calendar = window.LOVE_PETS_DEMO_API
+          ? await window.LOVE_PETS_DEMO_API(booking.calendarUrl)
+          : await (async () => { const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}${booking.calendarUrl}`, { signal: AbortSignal.timeout(10000) }); if (!response.ok) throw new Error('Não foi possível baixar o calendário.'); return { blob: await response.blob() }; })();
+        const url = URL.createObjectURL(calendar.blob || new Blob([calendar.calendarText], { type: 'text/calendar;charset=utf-8' }));
         const download = document.createElement('a'); download.href = url; download.download = 'love-pets-agendamento.ics'; download.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch { document.querySelector('#success-detail').textContent += ' O calendário está indisponível no momento.'; }

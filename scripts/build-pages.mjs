@@ -41,7 +41,7 @@ function collect(dir){
  }
 }
 collect(source);
-writeFileSync(join(output,'runtime.js'),`// Public connection settings; no secrets.\nwindow.LOVE_PETS_PUBLIC_BASE = ${JSON.stringify(base)};\nwindow.LOVE_PETS_API_ORIGIN = ${JSON.stringify(apiOrigin)};\n`);
+writeFileSync(join(output,'runtime.js'),`// Public connection settings; no secrets.\nwindow.LOVE_PETS_PUBLIC_BASE = ${JSON.stringify(base)};\nwindow.LOVE_PETS_API_ORIGIN = ${JSON.stringify(apiOrigin)};\nwindow.LOVE_PETS_DEMO_MODE = true;\n`);
 writeFileSync(join(output,'.nojekyll'),'');
 writeFileSync(join(output,'robots.txt'),`User-agent: *\nDisallow: ${base}equipe/\nDisallow: ${base}admin/\nSitemap: ${origin}${base}sitemap.xml\n`);
 writeFileSync(join(output,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${['','produtos/','agendar/'].map(route=>`<url><loc>${origin}${base}${route}</loc></url>`).join('')}</urlset>\n`);
