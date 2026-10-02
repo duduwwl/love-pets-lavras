@@ -181,7 +181,6 @@ const loadStaticCatalog = () => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/' }pr
   .catch(() => []);
 
 function loadDemoCatalog() {
-  if (!window.LOVE_PETS_DEMO_MODE) return null;
   const stored = localStorage.getItem('love-pets-demo-products-v1');
   if (stored === null) return null;
   try {
@@ -215,34 +214,42 @@ function showCatalog(items, localItems = items) {
   renderProducts();
 }
 
+function combineCatalog(serverItems, localItems) {
+  if (!Array.isArray(localItems) || !localItems.length) return serverItems;
+  const mergedServer = mergeCatalog(serverItems, localItems);
+  const serverIds = new Set(serverItems.map(item => item.id));
+  const localOnly = localItems.filter(item => !serverIds.has(item.id));
+  return [...mergedServer, ...localOnly];
+}
+
 async function loadCatalog() {
   const demoItems = loadDemoCatalog();
-  if (demoItems !== null) {
-    showCatalog(demoItems, demoItems);
-    return;
-  }
-  const localItems = await loadStaticCatalog();
+  const localItems = demoItems ?? await loadStaticCatalog();
   if (localItems.length) showCatalog(localItems, localItems);
   try {
     const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(4000), cache: 'no-store' });
     if (!response.ok) throw new Error('live products');
     const data = await response.json();
-    if (Array.isArray(data.products) && data.products.length) showCatalog(data.products, localItems);
+    if (Array.isArray(data.products) && data.products.length) {
+      showCatalog(combineCatalog(data.products, demoItems), localItems);
+    }
   } catch {
     if (!localItems.length) throw new Error('products unavailable');
   }
 }
 
+async function refreshCatalog() {
+  try { await loadCatalog(); } catch { /* keep the current catalog visible */ }
+}
+
 window.addEventListener('storage', event => {
   if (event.key !== 'love-pets-demo-products-v1') return;
-  const demoItems = loadDemoCatalog();
-  if (demoItems !== null) showCatalog(demoItems, demoItems);
+  refreshCatalog();
 });
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
-  const demoItems = loadDemoCatalog();
-  if (demoItems !== null) showCatalog(demoItems, demoItems);
+  refreshCatalog();
 });
 
 loadCatalog().catch(() => { grid.textContent = 'Não foi possível carregar os produtos. Recarregue a página ou fale com a Love Pets pelo WhatsApp.'; });
