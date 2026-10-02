@@ -167,7 +167,7 @@ async function createAppointment(request, db) {
   const notes = clean(body.notes, 500);
   const taxydog = body.taxydog === true;
   const pickupAddress = taxydog ? clean(body.pickupAddress, 240) : '';
-  if (taxydog && pickupAddress.length < 10) return fail('Informe o endereço completo para o Taxydog.');
+  if (taxydog && pickupAddress.length < 10) return fail('Informe o endereço completo para o Taxidog.');
   if (!bookableDate(date) || !validTime(time) || !petName || !guardianName || !['cao', 'gato'].includes(petType) || !['10', '11'].includes(String(phone.length)) || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) || (body.taxydog != null && typeof body.taxydog !== 'boolean')) {
     return fail('Revise a data, o horário e os dados de contato.');
   }

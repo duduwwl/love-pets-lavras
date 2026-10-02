@@ -11,7 +11,7 @@
 
 A página inicial não contém o catálogo nem o formulário de reservas. O catálogo tem página própria e reúne 25 itens das 23 fotos fornecidas, com descrições, preços de exemplo, busca e filtros por categoria. Os três sabores OneByOne Fit aparecem em um único produto, com escolha de sabor nos detalhes e no pedido pelo WhatsApp. Todos os botões de agendamento abrem diretamente o formulário em `/agendar/` no GitHub Pages. A entrada da equipe abre o painel protegido no serviço da agenda.
 
-A landing page destaca a fachada real da loja logo após a abertura e apresenta o Taxydog com a foto do veículo. O botão **Agendar com Taxydog** abre o formulário com a opção de buscar e levar o pet já selecionada. O cliente informa o endereço; a equipe confirma a disponibilidade do transporte e o valor pelo WhatsApp. O Taxydog é solicitado junto com Banho ou Banho e tosa.
+A landing page destaca a fachada real da loja logo após a abertura e apresenta o Taxidog com a foto do veículo. O botão **Agendar com Taxidog** abre o formulário com a opção de buscar e levar o pet já selecionada. O cliente informa o endereço; a equipe confirma a disponibilidade do transporte e o valor pelo WhatsApp. O Taxidog é solicitado junto com Banho ou Banho e tosa.
 
 O GitHub Pages publica os arquivos de `docs/` da branch `main`. Execute `node scripts/build-pages.mjs` após editar `public/`, e `node scripts/verify-pages.mjs` antes de enviar. Depois faça commit e push. Não são necessários tokens, segredos nem um servidor dentro do GitHub Pages.
 
@@ -51,7 +51,7 @@ Site da Love Pets com catálogo visual, agendamento online e painel administrati
 ## Agenda
 
 - Página pública: `/agendar`. O cliente escolhe serviço, cão ou gato, dia e horário e informa contato. A reserva entra como **pendente** até a equipe confirmar.
-- O Taxydog pode ser incluído na solicitação. O endereço só é exigido quando a opção está marcada e fica visível no painel protegido para a equipe. A migração `0003_taxydog.sql` adiciona esses campos aos agendamentos existentes sem apagar dados.
+- O Taxidog pode ser incluído na solicitação. O endereço só é exigido quando a opção está marcada e fica visível no painel protegido para a equipe. A migração `0003_taxydog.sql` adiciona esses campos aos agendamentos existentes sem apagar dados.
 - Painel: `/admin`. Acesso restrito por autenticação ChatGPT e pela lista de e-mails em `ADMIN_EMAILS`, configurada no ambiente da hospedagem. Nunca use a interface como única proteção; todas as rotas administrativas validam a conta no servidor.
 - O intervalo padrão é de 30 minutos. As opções públicas são Banho (60 minutos) e Banho e tosa (120 minutos). A opção de Tosa isolada foi removida do formulário e da demonstração; permanece no banco original para preservar registros existentes. Os valores são editáveis no painel real. A disponibilidade inicial é terça a sábado, 12h–18h, até 45 dias à frente. Confirme os horários reais antes de anunciar a agenda.
 - `calendar_cells` usa chave única por data e intervalo para impedir reservas ou bloqueios sobrepostos. Uma solicitação cancelada libera os intervalos.

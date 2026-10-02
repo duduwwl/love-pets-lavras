@@ -13,15 +13,15 @@ let selectedTime = '';
 let requestMode = false;
 let loadingTimes = 0;
 
-function syncTaxydog() {
+function syncTaxidog() {
   taxydogAddress.hidden = !taxydogOption.checked;
   pickupAddress.required = taxydogOption.checked;
   pickupAddress.disabled = !taxydogOption.checked;
   if (!taxydogOption.checked) pickupAddress.value = '';
 }
-taxydogOption.addEventListener('change', syncTaxydog);
+taxydogOption.addEventListener('change', syncTaxidog);
 if (location.hash === '#taxydog') taxydogOption.checked = true;
-syncTaxydog();
+syncTaxidog();
 
 function durationText(minutes) {
   if (minutes < 60) return `${minutes} min`;
@@ -116,7 +116,7 @@ function enableRequestMode() {
 function prepareWhatsAppRequest(payload) {
   const service = services.find(item => item.id === payload.service);
   const dateLabel = new Intl.DateTimeFormat('pt-BR',{dateStyle:'full',timeZone:'UTC'}).format(new Date(`${payload.date}T12:00:00Z`));
-  const message = ['Olá, Love Pets! Gostaria de pedir um horário.','',`Serviço: ${service.label}`,`Pet: ${payload.petName} (${payload.petType === 'gato' ? 'gato' : 'cão'})`,`Tutor: ${payload.guardianName}`,`WhatsApp: ${payload.phone}`,`Preferência: ${dateLabel}, às ${payload.time}`,payload.taxydog ? 'Taxydog: quero buscar e levar meu pet em casa' : '',payload.taxydog ? `Endereço: ${payload.pickupAddress}` : '',payload.email ? `E-mail: ${payload.email}` : '',payload.notes ? `Observações: ${payload.notes}` : '', '', 'Podem confirmar a disponibilidade e, se solicitado, os detalhes do Taxydog?'].filter(Boolean).join('\n');
+  const message = ['Olá, Love Pets! Gostaria de pedir um horário.','',`Serviço: ${service.label}`,`Pet: ${payload.petName} (${payload.petType === 'gato' ? 'gato' : 'cão'})`,`Tutor: ${payload.guardianName}`,`WhatsApp: ${payload.phone}`,`Preferência: ${dateLabel}, às ${payload.time}`,payload.taxydog ? 'Taxidog: quero buscar e levar meu pet em casa' : '',payload.taxydog ? `Endereço: ${payload.pickupAddress}` : '',payload.email ? `E-mail: ${payload.email}` : '',payload.notes ? `Observações: ${payload.notes}` : '', '', 'Podem confirmar a disponibilidade e, se solicitado, os detalhes do Taxidog?'].filter(Boolean).join('\n');
   const success = document.querySelector('#booking-success');
   success.querySelector('h2').textContent = 'Pedido pronto para enviar';
   success.querySelector('.success-icon').textContent = '♡';
@@ -155,8 +155,8 @@ form.addEventListener('submit', async event => {
     form.hidden = true;
     document.querySelector('#booking-success').hidden = false;
     const dateLabel = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full', timeZone: 'UTC' }).format(new Date(`${booking.date}T12:00:00Z`));
-    document.querySelector('#success-detail').textContent = `${payload.petName}: ${dateLabel}, às ${booking.time}.${payload.taxydog ? ' Taxydog solicitado.' : ''}`;
-    if (payload.taxydog) document.querySelector('#success-detail').nextElementSibling.textContent = 'A solicitação de banho e Taxydog foi recebida. A equipe confirma o horário, o transporte e o valor pelo WhatsApp.';
+    document.querySelector('#success-detail').textContent = `${payload.petName}: ${dateLabel}, às ${booking.time}.${payload.taxydog ? ' Taxidog solicitado.' : ''}`;
+    if (payload.taxydog) document.querySelector('#success-detail').nextElementSibling.textContent = 'A solicitação de banho e Taxidog foi recebida. A equipe confirma o horário, o transporte e o valor pelo WhatsApp.';
     const calendarLink = document.querySelector('#calendar-download');
     calendarLink.addEventListener('click', async event => {
       event.preventDefault();

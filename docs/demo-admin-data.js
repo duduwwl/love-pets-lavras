@@ -58,7 +58,7 @@
    const service = serviceFor(body.service), slots = availability(body.date, body.service).slots;
    const phone = String(body.phone || '').replace(/\D/g, '');
    if (!service || !slots.includes(body.time) || !body.petName || !body.guardianName || !['cao', 'gato'].includes(body.petType) || !['10', '11'].includes(String(phone.length))) throw new Error('Esse horário não está mais disponível. Escolha outro.');
-   if (body.taxydog && String(body.pickupAddress || '').trim().length < 10) throw new Error('Informe o endereço completo para o Taxydog.');
+   if (body.taxydog && String(body.pickupAddress || '').trim().length < 10) throw new Error('Informe o endereço completo para o Taxidog.');
    const id = `demo-${crypto.randomUUID()}`;
    data.appointments.push({ id, date: body.date, time: body.time, service: body.service, duration_minutes: service.durationMinutes, pet_name: String(body.petName).slice(0, 80), pet_type: body.petType, guardian_name: String(body.guardianName).slice(0, 100), phone, email: String(body.email || '').slice(0, 120), notes: String(body.notes || '').slice(0, 500), taxydog: body.taxydog ? 1 : 0, pickup_address: body.taxydog ? String(body.pickupAddress || '').slice(0, 240) : null, status: 'pending' });
    save(); return { id, date: body.date, time: body.time, status: 'pending', calendarUrl: `/api/appointments/${id}.ics` };
