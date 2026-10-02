@@ -15,7 +15,7 @@ productSection.style.marginTop = '20px';
 productSection.innerHTML = `<div class="panel-heading"><div><span class="panel-kicker">LOJA</span><h2>Produtos da loja</h2></div></div>
   <p class="panel-help">${productDemo
     ? 'Esta é uma demonstração: os produtos salvos aparecem apenas neste navegador. Para publicar para todos, use o painel protegido da equipe.'
-    : 'Os produtos fotografados estão cadastrados com preços ilustrativos e estoque a conferir. Atualize preço e quantidade aqui; novos produtos publicados aparecem na loja.'}</p>
+    : 'Os produtos fotografados estão cadastrados com estoque a conferir. Atualize preço e quantidade aqui; novos produtos publicados aparecem na loja.'}</p>
   ${productDemo ? '<p class="team-note">As alterações da demonstração ficam apenas neste navegador e não pedem acesso à conta real.</p>' : ''}
   <form id="product-form" class="product-form">
     <input type="hidden" name="productId">

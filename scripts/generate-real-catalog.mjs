@@ -1,5 +1,5 @@
 // Snapshot of the 23 photographs supplied by the Love Pets team on 2026-10-01.
-// Prices are examples until the team replaces them in the protected product panel.
+// Prices are maintained in the catalog and should be confirmed with the team before purchase.
 import { writeFileSync } from 'node:fs';
 
 const labels = {
@@ -47,7 +47,7 @@ const products = items.map(([name, category, image, amount, description, usage, 
   name, category, categoryLabel: labels[category],
   image: `/assets/products/${image}.jpg`,
   description, usage, selection, care,
-  price: `R$ ${amount.toFixed(2).replace('.', ',')} · ilustrativo`,
+  price: `R$ ${amount.toFixed(2).replace('.', ',')}`,
   stockQuantity: null,
   illustrative: false,
 })).filter(item => !['10000000-0000-4000-8000-000000000009', '10000000-0000-4000-8000-000000000010'].includes(item.id));
@@ -72,7 +72,7 @@ const nameOverrides = {
   'Papaya Pets Cuidado Oral 45 g': 'Petisco Cuidado Oral',
 };
 for (const product of products) {
-  if (priceOverrides[product.name] !== undefined) product.price = `R$ ${priceOverrides[product.name].toFixed(2).replace('.', ',')} · ilustrativo`;
+  if (priceOverrides[product.name] !== undefined) product.price = `R$ ${priceOverrides[product.name].toFixed(2).replace('.', ',')}`;
   if (nameOverrides[product.name]) product.name = nameOverrides[product.name];
 }
 const diapers = products.find(item => item.id === '10000000-0000-4000-8000-000000000019');

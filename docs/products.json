@@ -9,7 +9,7 @@
     "usage": "Use com creme dental próprio para pets e introduza a escovação aos poucos.",
     "selection": "Escolha o tamanho da escova conforme a boca do animal; cores sujeitas à disponibilidade.",
     "care": "Lave a escova após o uso e substitua quando as cerdas estiverem gastas.",
-    "price": "R$ 10,00 · ilustrativo",
+    "price": "R$ 10,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -23,7 +23,7 @@
     "usage": "Para a escovação dos dentes com uma escova própria para pets.",
     "selection": "Confira no rótulo a indicação de uso e peça orientação à equipe para introduzir a escovação.",
     "care": "Feche a embalagem após o uso e siga as instruções do fabricante.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -37,7 +37,7 @@
     "usage": "Produto para o cuidado externo do focinho, conforme as instruções do fabricante.",
     "selection": "Confira os ingredientes e a indicação no rótulo antes de usar.",
     "care": "Guarde bem fechado e suspenda o uso se houver irritação.",
-    "price": "R$ 30,00 · ilustrativo",
+    "price": "R$ 30,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -51,7 +51,7 @@
     "usage": "Para servir água ou alimento no dia a dia do pet.",
     "selection": "Confirme tamanho e cor disponíveis; escolha uma peça compatível com o porte do animal.",
     "care": "Lave com frequência e substitua se houver rachaduras ou desgaste.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -65,7 +65,7 @@
     "usage": "Para compor a rotina de escovação com escova apropriada.",
     "selection": "Veja a indicação de uso e a adaptação do seu pet antes de escolher.",
     "care": "Mantenha a bisnaga fechada e siga as orientações do fabricante.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -79,7 +79,7 @@
     "usage": "Produto de apoio à orientação do local onde o pet não deve urinar.",
     "selection": "Leia as instruções do rótulo e teste o uso no ambiente indicado.",
     "care": "Mantenha fora do alcance dos animais quando não estiver em uso.",
-    "price": "R$ 25,00 · ilustrativo",
+    "price": "R$ 25,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -93,7 +93,7 @@
     "usage": "Para higienização a seco conforme o modo de uso da embalagem.",
     "selection": "Confira a indicação do rótulo para o tipo de pelagem e idade do pet.",
     "care": "Evite olhos e mucosas; siga as instruções do fabricante.",
-    "price": "R$ 40,00 · ilustrativo",
+    "price": "R$ 40,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -107,7 +107,7 @@
     "usage": "Ofereça como petisco, respeitando a porção indicada na embalagem.",
     "selection": "Confira ingredientes, idade e porte recomendados no rótulo.",
     "care": "Conserve fechado em local seco e ofereça água fresca ao pet.",
-    "price": "R$ 15,00 · ilustrativo",
+    "price": "R$ 15,00",
     "stockQuantity": 10,
     "illustrative": false,
     "flavors": [
@@ -126,7 +126,7 @@
     "usage": "Para o cuidado externo dos coxins conforme o modo de uso do rótulo.",
     "selection": "Confira os ingredientes e a indicação antes da primeira aplicação.",
     "care": "Mantenha fechado e interrompa o uso se houver irritação.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -140,7 +140,7 @@
     "usage": "Acessório para uso supervisionado no dia a dia.",
     "selection": "Confirme ajuste, tamanho e estampa; a coleira não deve apertar o pescoço.",
     "care": "Verifique fecho, tecido e guizo regularmente.",
-    "price": "R$ 19,90 · ilustrativo",
+    "price": "R$ 19,90",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -154,7 +154,7 @@
     "usage": "Para a limpeza das patinhas após os passeios, conforme o rótulo.",
     "selection": "Leia a indicação de uso e confirme se é adequada ao seu pet.",
     "care": "Evite olhos e mucosas e siga as instruções da embalagem.",
-    "price": "R$ 30,00 · ilustrativo",
+    "price": "R$ 30,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -168,7 +168,7 @@
     "usage": "Para deixar caminhas e cantinhos de descanso mais aconchegantes.",
     "selection": "Confirme medida, estampa e tecido disponíveis antes do pedido.",
     "care": "Lave de acordo com a etiqueta e seque completamente antes de guardar.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -182,7 +182,7 @@
     "usage": "Para deslocamentos em que o pet precise de uma caixa apropriada.",
     "selection": "Confira dimensões internas, porte do animal e travas antes de comprar.",
     "care": "Higienize após o uso e verifique as travas periodicamente.",
-    "price": "R$ 40,00 · ilustrativo",
+    "price": "R$ 40,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -196,7 +196,7 @@
     "usage": "Ofereça um local próprio para arranhar e brincar.",
     "selection": "Confira altura, estabilidade e espaço disponível em casa.",
     "care": "Inspecione a corda e a base; substitua peças muito desgastadas.",
-    "price": "R$ 60,00 · ilustrativo",
+    "price": "R$ 60,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -210,7 +210,7 @@
     "usage": "Para passeios com ajuste confortável ao corpo do pet.",
     "selection": "Meça tórax e pescoço e confira o tamanho antes de pedir.",
     "care": "Verifique costuras, mosquetão e fechos antes de cada passeio.",
-    "price": "R$ 60,00 · ilustrativo",
+    "price": "R$ 60,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -224,7 +224,7 @@
     "usage": "Para organizar o espaço de higiene do cão em casa.",
     "selection": "Confira o tamanho do tapete e a área de absorção indicados no pacote.",
     "care": "Troque conforme a necessidade e descarte no lixo comum.",
-    "price": "R$ 5,00 · ilustrativo",
+    "price": "R$ 5,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -238,7 +238,7 @@
     "usage": "Para situações em que o pet precise de proteção descartável.",
     "selection": "Confirme o tamanho, as medidas e o tipo de fralda com a equipe.",
     "care": "Troque com frequência e siga as instruções da embalagem.",
-    "price": "R$ 15,00 · ilustrativo",
+    "price": "R$ 15,00",
     "stockQuantity": null,
     "illustrative": false,
     "sizes": [
@@ -257,7 +257,7 @@
     "usage": "Para momentos de brincadeira e interação supervisionada.",
     "selection": "Escolha o tamanho e o material adequados ao porte e ao jeito de brincar.",
     "care": "Inspecione as peças e descarte brinquedos danificados.",
-    "price": "R$ 10,00 · ilustrativo",
+    "price": "R$ 10,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -271,7 +271,7 @@
     "usage": "Ofereça como agrado, seguindo a porção indicada pelo fabricante.",
     "selection": "Confira ingredientes, tamanho e adequação à idade do cão.",
     "care": "Supervisione a mastigação e mantenha água fresca disponível.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -285,7 +285,7 @@
     "usage": "Petisco de uso diário conforme a orientação da embalagem.",
     "selection": "Confira ingredientes e indicação de porte no rótulo.",
     "care": "Supervisione a mastigação e armazene em local seco.",
-    "price": "R$ 25,00 · ilustrativo",
+    "price": "R$ 25,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -299,7 +299,7 @@
     "usage": "Para criar um cantinho confortável de descanso.",
     "selection": "Confirme medidas da cama e compare com o porte e hábito de dormir do pet.",
     "care": "Siga a etiqueta de lavagem e deixe secar completamente.",
-    "price": "R$ 80,00 · ilustrativo",
+    "price": "R$ 80,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -313,7 +313,7 @@
     "usage": "Para o banho conforme a orientação do rótulo.",
     "selection": "Confira idade, tipo de pelagem e ingredientes antes de escolher.",
     "care": "Evite contato com olhos e mucosas; enxágue bem.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -327,7 +327,7 @@
     "usage": "Para o banho conforme a orientação do rótulo.",
     "selection": "Confira a indicação para a pelagem do pet antes de usar.",
     "care": "Evite contato com olhos e mucosas; enxágue bem.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -341,7 +341,7 @@
     "usage": "Para o banho conforme a orientação do rótulo.",
     "selection": "Confira a indicação para o tipo de pelo e pele do pet.",
     "care": "Evite contato com olhos e mucosas; enxágue bem.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   },
@@ -355,7 +355,7 @@
     "usage": "Use após o shampoo conforme o modo de uso da embalagem.",
     "selection": "Confira a indicação para a pelagem e o porte do pet.",
     "care": "Evite contato com olhos e mucosas; enxágue bem.",
-    "price": "R$ 20,00 · ilustrativo",
+    "price": "R$ 20,00",
     "stockQuantity": null,
     "illustrative": false
   }

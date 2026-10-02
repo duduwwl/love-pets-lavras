@@ -111,7 +111,7 @@ const photo = 'data:image/webp;base64,UklGRgAAAAAA';
 const originalCatalog = (await data(await call('/api/admin/products', {headers:adminHeaders}))).products;
 assert.equal(originalCatalog.length,25);
 assert(originalCatalog.every(item => item.id.startsWith('10000000-')));
-assert(originalCatalog.every(item => item.price.includes('ilustrativo')));
+assert(originalCatalog.every(item => !item.price.includes('ilustrativo')));
 const fitProduct=originalCatalog.find(item=>item.id==='10000000-0000-4000-8000-000000000008');
 assert.deepEqual(fitProduct.flavors,['Maçã','Manga','Morango']);
 assert.equal(fitProduct.stockQuantity,10);

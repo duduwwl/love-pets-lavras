@@ -60,12 +60,12 @@ assert.deepEqual(products.find(product=>product.id.endsWith('000000000008'))?.fl
 assert.equal(products.find(product=>product.id.endsWith('000000000008'))?.stockQuantity,10);
 assert.equal(products.filter(product=>product.name.startsWith('OneByOne Fit')).length,1);
 assert.deepEqual(products.find(product=>product.name.startsWith('Fraldas'))?.sizes,['P','M','G']);
-assert.equal(products.find(product=>product.name==='Mantinhas Love Pets')?.price,'R$ 20,00 · ilustrativo');
+assert.equal(products.find(product=>product.name==='Mantinhas Love Pets')?.price,'R$ 20,00');
 for(const product of products){
  for(const field of ['description','usage','selection','care'])assert(product[field]?.length>20,`${product.name}: missing ${field}`);
  assert.match(product.id,/^[0-9a-f-]{36}$/);
  assert(product.image.startsWith(base));assert(existsSync(join(root,product.image.slice(base.length))));
- assert(product.price.includes('ilustrativo'));
+ assert(!product.price.includes('ilustrativo'));
  assert.equal(product.illustrative,false);
 }
 assert(readFileSync(join(root,'products.js'),'utf8').includes("/api/products"));

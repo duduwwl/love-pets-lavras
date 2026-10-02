@@ -67,9 +67,7 @@ function openProduct(product) {
     row.append(term, description);
     details.append(row);
   }
-  dialog.querySelector('.dialog-note').textContent = product.price?.includes('ilustrativo')
-    ? 'Foto do produto enviada pela loja, com fundo padronizado. Este preço é apenas um exemplo; confirme o valor atual e a disponibilidade.'
-    : 'Foto do produto enviada pela loja, com fundo padronizado. Confirme variações e disponibilidade.';
+  dialog.querySelector('.dialog-note').textContent = 'Foto do produto enviada pela loja, com fundo padronizado. Confirme variações e disponibilidade.';
   const dialogVisual = dialog.querySelector('.dialog-visual');
   function updateWhatsApp() {
     setFlavorImage(dialogVisual, product, flavorSelect.value);
