@@ -181,7 +181,8 @@ const loadStaticCatalog = () => fetch(`${window.LOVE_PETS_PUBLIC_BASE || '/' }pr
   .catch(() => []);
 
 function loadDemoCatalog() {
-  const stored = localStorage.getItem('love-pets-demo-products-v1');
+  let stored;
+  try { stored = localStorage.getItem('love-pets-demo-products-v1'); } catch { return null; }
   if (stored === null) return null;
   try {
     const items = JSON.parse(stored);
