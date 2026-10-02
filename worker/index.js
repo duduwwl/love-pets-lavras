@@ -336,7 +336,7 @@ async function ensureCatalogSeeded(db) {
     (id, name, category, description, usage, selection, care, image, price, available, stock_quantity, flavors, illustrative, image_col, image_row, image_cols, image_rows)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
     item.id, item.name, item.category, item.description, item.usage, item.selection, item.care,
-    item.image, item.price, 1, null, JSON.stringify(item.flavors || []), 0, null, null, null, null,
+    item.image, item.price, 1, item.stockQuantity ?? null, JSON.stringify(item.flavors || []), 0, null, null, null, null,
   )));
   statements.push(db.prepare('INSERT OR IGNORE INTO catalog_bootstrap (key) VALUES (?)').bind('real-catalog-v2'));
   await db.batch(statements);

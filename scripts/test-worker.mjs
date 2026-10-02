@@ -114,6 +114,7 @@ assert(originalCatalog.every(item => item.id.startsWith('10000000-')));
 assert(originalCatalog.every(item => item.price.includes('ilustrativo')));
 const fitProduct=originalCatalog.find(item=>item.id==='10000000-0000-4000-8000-000000000008');
 assert.deepEqual(fitProduct.flavors,['Maçã','Manga','Morango']);
+assert.equal(fitProduct.stockQuantity,10);
 assert.equal(originalCatalog.filter(item=>item.name.startsWith('OneByOne Fit')).length,1);
 assert.equal(originalCatalog[0].stockQuantity,null);
 assert.equal((await call(`/api/admin/products/${originalCatalog[0].id}`, {method:'PUT',headers:adminHeaders,body:{...originalCatalog[0],price:'R$ 15,90',stockQuantity:null}})).status,200);

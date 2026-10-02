@@ -108,7 +108,7 @@
     "selection": "Confira ingredientes, idade e porte recomendados no rótulo.",
     "care": "Conserve fechado em local seco e ofereça água fresca ao pet.",
     "price": "R$ 9,90 · ilustrativo",
-    "stockQuantity": null,
+    "stockQuantity": 10,
     "illustrative": false,
     "flavors": [
       "Maçã",

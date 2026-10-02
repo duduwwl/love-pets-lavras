@@ -54,6 +54,7 @@ const products = items.map(([name, category, image, amount, description, usage, 
 const oneByOne = products.find(item => item.id === '10000000-0000-4000-8000-000000000008');
 oneByOne.name = 'OneByOne Fit 50 g';
 oneByOne.description = 'Snack mastigável OneByOne Fit para cães, 50 g. Escolha entre Maçã com cenoura e quinoa, Manga com beterraba e linhaça ou Morango com batata-doce e chia.';
+oneByOne.stockQuantity = 10;
 oneByOne.flavors = ['Maçã', 'Manga', 'Morango'];
 writeFileSync('public/products.json', JSON.stringify(products, null, 2) + '\n');
 console.log(`Prepared ${products.length} real catalog items from 23 photographs.`);

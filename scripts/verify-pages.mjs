@@ -50,6 +50,7 @@ for(const [id,filename] of [['14','mantinhas-enquadradas.jpg'],['24','shampoo-fi
  assert.equal(products.find(product=>product.id.endsWith(id.padStart(12,'0')))?.image,`${base}assets/products/${filename}`);
 }
 assert.deepEqual(products.find(product=>product.id.endsWith('000000000008'))?.flavors,['Maçã','Manga','Morango']);
+assert.equal(products.find(product=>product.id.endsWith('000000000008'))?.stockQuantity,10);
 assert.equal(products.filter(product=>product.name.startsWith('OneByOne Fit')).length,1);
 for(const product of products){
  for(const field of ['description','usage','selection','care'])assert(product[field]?.length>20,`${product.name}: missing ${field}`);
