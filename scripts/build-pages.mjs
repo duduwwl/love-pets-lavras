@@ -8,13 +8,13 @@ if(output!==join(root,'docs'))throw new Error('Invalid output path');
 const base='/love-pets-lavras/';
 const origin='https://duduwwl.github.io';
 const apiOrigin='https://love-pets-lavras.duduwwl.chatgpt.site';
-const routes={'index.html':'index.html','produtos.html':'produtos/index.html','agendar.html':'agendar/index.html','equipe.html':'equipe/index.html','admin-gateway.html':'admin/index.html'};
-const exclusions=new Set(['admin.html','admin.js','admin-products.js','demo-admin.html','demo-admin-data.js','runtime.js','sitemap.xml','robots.txt','gato-hero.png']);
+const routes={'index.html':'index.html','produtos.html':'produtos/index.html','agendar.html':'agendar/index.html','equipe.html':'equipe/index.html','admin-gateway.html':'admin/index.html','demo-admin.html':'demo-admin/index.html'};
+const exclusions=new Set(['admin.html','runtime.js','sitemap.xml','robots.txt','gato-hero.png']);
 function pageLink(value) {
   if(!value.startsWith('/')||value.startsWith('//'))return value;
   const [path,...fragment]=value.split('#');
   const bookingLink=base+'agendar/';
-  const names={'/':base,'/produtos':base+'produtos/','/produtos.html':base+'produtos/','/agendar':bookingLink,'/agendar.html':bookingLink,'/equipe.html':base+'equipe/','/admin':base+'admin/','/admin-gateway.html':base+'admin/'};
+  const names={'/':base,'/produtos':base+'produtos/','/produtos.html':base+'produtos/','/agendar':bookingLink,'/agendar.html':bookingLink,'/equipe.html':base+'equipe/','/admin':base+'admin/','/admin-gateway.html':base+'admin/','/demo-admin.html':base+'demo-admin/'};
   return (names[path] || base+path.slice(1))+(fragment.length?'#'+fragment.join('#'):'');
 }
 rmSync(output,{recursive:true,force:true});mkdirSync(output,{recursive:true});

@@ -3,7 +3,7 @@ import {existsSync,readFileSync,readdirSync} from 'node:fs';
 import {join} from 'node:path';
 const root=join(process.cwd(),'docs');
 const base='/love-pets-lavras/';
-const pages=['index.html','produtos/index.html','agendar/index.html','equipe/index.html','admin/index.html','404.html'];
+const pages=['index.html','produtos/index.html','agendar/index.html','equipe/index.html','demo-admin/index.html','admin/index.html','404.html'];
 let references=0;
 for(const path of pages){
  const html=readFileSync(join(root,path),'utf8');
@@ -37,7 +37,14 @@ assert(booking.includes('id="taxydog-option"'));
 assert(booking.includes('name="pickupAddress"'));
 assert(!booking.includes('01—03'));
 assert(readFileSync(join(root,'booking.js'),'utf8').includes("service.id !== 'tosa'"));
-assert(readFileSync(join(root,'equipe/index.html'),'utf8').includes('value="lovepets-demo"'));
+const team=readFileSync(join(root,'equipe/index.html'),'utf8');
+assert(team.includes('value="lovepets-demo"'));
+assert(team.includes(`action="${base}demo-admin/"`));
+const demo=readFileSync(join(root,'demo-admin/index.html'),'utf8');
+assert(demo.includes('PAINEL DE DEMONSTRAÇÃO'));
+assert(demo.includes(`${base}demo-admin-data.js`));
+assert(demo.includes(`${base}admin.js`));
+assert(demo.includes(`${base}admin-products.js`));
 const admin=readFileSync(join(root,'admin/index.html'),'utf8');
 assert(admin.includes('url=https://love-pets-lavras.duduwwl.chatgpt.site/admin'));
 assert(!admin.includes('demo-admin-data.js'));
@@ -63,6 +70,6 @@ for(const product of products){
 }
 assert(readFileSync(join(root,'products.js'),'utf8').includes("/api/products"));
 assert(!existsSync(join(root,'admin.html')));
-assert(!existsSync(join(root,'admin.js')));
+assert(existsSync(join(root,'admin.js')));
 assert(readFileSync(join(root,'runtime.js'),'utf8').includes('https://love-pets-lavras.duduwwl.chatgpt.site'));
 console.log(`Pages verified: ${pages.length} pages, ${references} links/assets, 25 photographed products, internal booking form, protected admin gateway.`);
