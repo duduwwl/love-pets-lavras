@@ -37,10 +37,74 @@ function showMessage(message, good = false) {
 
 async function api(url, options) {
   if (window.LOVE_PETS_DEMO_API) return window.LOVE_PETS_DEMO_API(url, options);
+  if (window.LOVE_PETS_FIREBASE_MODE && window.LovePetsFirebase) return firebaseApi(url, options);
   const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}${url}`, { credentials: 'same-origin', signal: AbortSignal.timeout(10000), ...options });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'A agenda está indisponível no momento.');
   return data;
+}
+
+const firebaseDefaults = {
+  services: [{ id: 'banho', label: 'Banho', durationMinutes: 60, enabled: true }, { id: 'banho-tosa', label: 'Banho e tosa', durationMinutes: 120, enabled: true }],
+  hours: Array.from({ length: 7 }, (_, weekday) => ({ weekday, enabled: weekday >= 2 && weekday <= 6, openTime: '12:00', closeTime: '18:00' })),
+};
+const firebaseToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const firebaseDayOffset = (date, delta) => { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + delta); return d.toISOString().slice(0, 10); };
+const firebaseMinutes = time => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
+const firebaseTime = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+const firebaseCells = (time, duration) => Array.from({ length: duration / 30 }, (_, index) => firebaseTime(firebaseMinutes(time) + index * 30));
+const firebaseOverlap = (a, b) => a.date === b.date && firebaseMinutes(a.time) < firebaseMinutes(b.time) + Number(b.durationMinutes || b.duration_minutes || 30) && firebaseMinutes(b.time) < firebaseMinutes(a.time) + Number(a.durationMinutes || a.duration_minutes || 30);
+
+async function firebaseConfig() {
+  const [savedServices, savedHours] = await Promise.all([window.LovePetsFirebase.getSettings('services'), window.LovePetsFirebase.getSettings('hours')]);
+  return { services: savedServices?.services || firebaseDefaults.services, hours: savedHours?.hours || firebaseDefaults.hours };
+}
+
+async function firebaseAvailability(date, serviceId) {
+  const settings = await firebaseConfig();
+  const service = settings.services.find(item => item.id === serviceId && item.enabled && item.id !== 'tosa');
+  const schedule = settings.hours.find(item => item.weekday === new Date(`${date}T12:00:00Z`).getUTCDay());
+  if (!service || !schedule?.enabled) return { date, service: serviceId, slots: [], dayUnavailable: true };
+  const [appointments, blocks] = await Promise.all([window.LovePetsFirebase.listAppointments(), window.LovePetsFirebase.listBlocks()]);
+  const today = firebaseToday();
+  const now = new Date();
+  const slots = [];
+  for (let start = firebaseMinutes(schedule.openTime); start + service.durationMinutes <= firebaseMinutes(schedule.closeTime); start += 30) {
+    const time = firebaseTime(start);
+    const slotDate = new Date(`${date}T${time}:00-03:00`);
+    const occupied = appointments.some(item => !['cancelled', 'completed'].includes(item.status) && firebaseOverlap({ date, time, durationMinutes: service.durationMinutes }, item));
+    const blocked = blocks.some(item => item.date === date && (item.time === '*' || firebaseCells(item.time, 30).includes(time)));
+    if (date >= today && slotDate.valueOf() - now.valueOf() >= 2 * 60 * 60 * 1000 && !occupied && !blocked) slots.push(time);
+  }
+  return { date, service: serviceId, durationMinutes: service.durationMinutes, slots, dayUnavailable: slots.length === 0 };
+}
+
+async function firebaseApi(url, options = {}) {
+  const parsed = new URL(url, location.origin);
+  const method = options.method || 'GET';
+  if (parsed.pathname === '/api/config' && method === 'GET') {
+    const settings = await firebaseConfig();
+    const today = firebaseToday();
+    return { services: settings.services.filter(item => item.enabled && item.id !== 'tosa'), today, maxDate: firebaseDayOffset(today, 45), timezone: 'America/Sao_Paulo' };
+  }
+  if (parsed.pathname === '/api/availability' && method === 'GET') return firebaseAvailability(parsed.searchParams.get('date'), parsed.searchParams.get('service'));
+  if (parsed.pathname === '/api/appointments' && method === 'POST') {
+    const body = JSON.parse(options.body || '{}');
+    const available = await firebaseAvailability(body.date, body.service);
+    if (!available.slots.includes(body.time)) throw new Error('Esse horário não está mais disponível. Escolha outro.');
+    const id = crypto.randomUUID();
+    await window.LovePetsFirebase.saveAppointment(id, { date: body.date, time: body.time, service: body.service, durationMinutes: available.durationMinutes, petName: body.petName, petType: body.petType, guardianName: body.guardianName, phone: String(body.phone || '').replace(/\D/g, ''), email: body.email || null, notes: body.notes || null, taxydog: !!body.taxydog, pickupAddress: body.pickupAddress || null, status: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    return { id, date: body.date, time: body.time, status: 'pending', calendarUrl: `/api/appointments/${id}.ics` };
+  }
+  const visitor = parsed.pathname.match(/^\/api\/appointments\/([0-9a-f-]{36})\.ics$/);
+  if (visitor && method === 'GET') {
+    const item = (await window.LovePetsFirebase.listAppointments()).find(appointment => appointment.id === visitor[1]);
+    if (!item) throw new Error('Agendamento não encontrado.');
+    const end = firebaseMinutes(item.time) + Number(item.durationMinutes || 60);
+    const dayStamp = item.date.replace(/-/g, '');
+    return { calendarText: ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Love Pets//Agenda//PT-BR', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT', `UID:${item.id}@love-pets-lavras`, `DTSTART;TZID=America/Sao_Paulo:${dayStamp}T${String(item.time).replace(':', '')}00`, `DTEND;TZID=America/Sao_Paulo:${dayStamp}T${firebaseTime(end).replace(':', '')}00`, 'SUMMARY:Love Pets · Solicitação de horário', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n') + '\r\n' };
+  }
+  throw new Error('A agenda está indisponível no momento.');
 }
 
 function selectedService() { return form.querySelector('input[name=service]:checked')?.value || ''; }

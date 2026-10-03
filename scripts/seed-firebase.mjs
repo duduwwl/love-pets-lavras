@@ -25,4 +25,18 @@ for (const product of products) {
   });
   if (!response.ok) throw new Error(`Falha ao cadastrar ${product.name}: ${response.status} ${await response.text()}`);
 }
+const settings = {
+  services: [{ id: 'banho', label: 'Banho', durationMinutes: 60, enabled: true }, { id: 'banho-tosa', label: 'Banho e tosa', durationMinutes: 120, enabled: true }],
+  hours: Array.from({ length: 7 }, (_, weekday) => ({ weekday, enabled: weekday >= 2 && weekday <= 6, openTime: '12:00', closeTime: '18:00' })),
+};
+const settingsValue = item => item === null || item === undefined ? { nullValue: null }
+  : typeof item === 'boolean' ? { booleanValue: item }
+  : typeof item === 'number' && Number.isInteger(item) ? { integerValue: String(item) }
+  : Array.isArray(item) ? { arrayValue: { values: item.map(settingsValue) } }
+  : typeof item === 'object' ? { mapValue: { fields: Object.fromEntries(Object.entries(item).map(([key, child]) => [key, settingsValue(child)])) } }
+  : { stringValue: String(item) };
+for (const [id, data] of Object.entries(settings)) {
+  const response = await fetch(`${endpoint}/lovePetsSettings/${id}?key=${apiKey}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fields: { [id]: settingsValue(data), updatedAt: settingsValue(new Date().toISOString()) } }) });
+  if (!response.ok) throw new Error(`Falha ao cadastrar configurações ${id}: ${response.status}`);
+}
 console.log(`Firebase mundix: ${products.length} produtos sincronizados.`);

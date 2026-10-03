@@ -155,7 +155,7 @@ function sameOrigin(request) {
 }
 
 // Only the public booking endpoints are available to the GitHub Pages frontend.
-const PUBLIC_BOOKING_ORIGINS = new Set(['https://duduwwl.github.io']);
+const PUBLIC_BOOKING_ORIGINS = new Set(['https://duduwwl.github.io', 'https://lovepets.app.br', 'https://www.lovepets.app.br']);
 function publicBookingPath(path) {
   return ['/api/config', '/api/availability', '/api/appointments', '/api/products'].includes(path) ||
     /^\/api\/appointments\/[0-9a-f-]{36}\.ics$/.test(path) || /^\/api\/product-images\/[0-9a-f-]{36}\.webp$/.test(path);

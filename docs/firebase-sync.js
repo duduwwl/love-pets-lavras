@@ -67,5 +67,8 @@
     deleteProduct: id => remove('lovePetsProducts', id),
     saveAppointment: (id, data) => save('lovePetsAppointments', id, data),
     listAppointments: () => list('lovePetsAppointments'),
+    getSettings: id => get('lovePetsSettings', id),
+    saveSettings: (id, data) => save('lovePetsSettings', id, data),
+    listBlocks: () => list('lovePetsBlocks'),
   };
 })();
