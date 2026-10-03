@@ -181,7 +181,7 @@ document.querySelector('#copy-calendar')?.addEventListener('click', async () => 
       const url = URL.createObjectURL(new Blob([data.calendarText], {type:'text/calendar;charset=utf-8'}));
       const download = document.createElement('a'); download.href=url; download.download='love-pets-demonstracao.ics'; download.click();
       setTimeout(()=>URL.revokeObjectURL(url),1000);
-      tell('Calendário de demonstração baixado. Contém somente os exemplos deste navegador.',true); return;
+      tell('Calendário de demonstração baixado. Contém os registros compartilhados da Love Pets.',true); return;
     }
     await navigator.clipboard.writeText(data.url);
     tell('Link iCal copiado. Cole-o em “Adicionar calendário por URL” no Google Calendar ou Outlook.', true);
