@@ -14,6 +14,37 @@ const DEFAULT_HOURS = Array.from({ length: 7 }, (_, weekday) => ({
 }));
 const assetCache = new Map();
 
+// Firebase is used as the cross-device mirror for the Love Pets data. The
+// project already has its own unrelated `products` collection, so every
+// record written here is namespaced under a Love Pets collection.
+const FIREBASE_PROJECT_ID = 'mundix';
+const FIREBASE_API_KEY = 'AIzaSyCZxFIpb91Dy_Y3uDeb0SyA3DLJ4jhkk9w';
+
+function firestoreValue(value) {
+  if (value === null || value === undefined) return { nullValue: null };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number' && Number.isInteger(value)) return { integerValue: String(value) };
+  if (typeof value === 'number') return { doubleValue: value };
+  if (Array.isArray(value)) return { arrayValue: { values: value.map(firestoreValue) } };
+  if (typeof value === 'object') return { mapValue: { fields: Object.fromEntries(Object.entries(value).map(([key, item]) => [key, firestoreValue(item)])) } };
+  return { stringValue: String(value) };
+}
+
+async function firebaseMirror(collection, id, data, method = 'PATCH') {
+  const encodedId = encodeURIComponent(id);
+  const endpoint = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collection}/${encodedId}?key=${FIREBASE_API_KEY}`;
+  const response = await fetch(endpoint, {
+    method,
+    headers: { 'content-type': 'application/json' },
+    body: method === 'DELETE' ? undefined : JSON.stringify({ fields: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, firestoreValue(value)])) }),
+  });
+  if (!response.ok) throw new Error(`Firebase ${method} ${collection}/${id} failed: ${response.status}`);
+}
+
+function mirrorLater(promise) {
+  promise.catch(error => console.error('Firebase mirror failed', error));
+}
+
 function json(data, status = 200, extra = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -185,6 +216,11 @@ async function createAppointment(request, db) {
     if (/UNIQUE|constraint|PRIMARY KEY/i.test(String(error))) return fail('Esse horário acabou de ser ocupado. Escolha outro.', 409);
     throw error;
   }
+  mirrorLater(firebaseMirror('lovePetsAppointments', id, {
+    date, time, service, durationMinutes: available.durationMinutes, petName, petType,
+    guardianName, phone, email: email || null, notes: notes || null, taxydog,
+    pickupAddress: pickupAddress || null, status: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  }));
   return json({ id, date, time, status: 'pending', calendarUrl: `/api/appointments/${id}.ics` }, 201);
 }
 
@@ -235,6 +271,7 @@ async function changeStatus(db, id, request) {
     if (/UNIQUE|constraint|PRIMARY KEY/i.test(String(error))) return fail('O período está ocupado ou bloqueado e não pode ser reativado.', 409);
     throw error;
   }
+  mirrorLater(firebaseMirror('lovePetsAppointments', id, { status, updatedAt: new Date().toISOString() }));
   return json({ ok: true });
 }
 
@@ -248,6 +285,7 @@ async function saveHours(db, request) {
     if (row.weekday !== i || typeof row.enabled !== 'boolean' || !validTime(row.openTime) || !validTime(row.closeTime) || minuteOf(row.openTime) >= minuteOf(row.closeTime)) return fail('Revise os horários da semana.');
   }
   await db.batch([db.prepare('DELETE FROM weekly_hours'), ...ordered.map(row => db.prepare('INSERT INTO weekly_hours (weekday, enabled, open_time, close_time) VALUES (?, ?, ?, ?)').bind(row.weekday, row.enabled ? 1 : 0, row.openTime, row.closeTime))]);
+  mirrorLater(firebaseMirror('lovePetsSettings', 'hours', { hours: ordered, updatedAt: new Date().toISOString() }));
   return json({ ok: true });
 }
 
@@ -262,6 +300,7 @@ async function saveServices(db, request) {
   }
   if (!body.services.some(service => service.enabled)) return fail('Mantenha ao menos um serviço disponível.');
   await db.batch([db.prepare('DELETE FROM services'), ...body.services.map(service => db.prepare('INSERT INTO services (id, label, duration_minutes, enabled) VALUES (?, ?, ?, ?)').bind(service.id, clean(service.label, 60), service.durationMinutes, service.enabled ? 1 : 0))]);
+  mirrorLater(firebaseMirror('lovePetsSettings', 'services', { services: body.services, updatedAt: new Date().toISOString() }));
   return json({ ok: true });
 }
 
@@ -278,6 +317,7 @@ async function addBlock(db, request) {
   for (const cell of cells) statements.push(db.prepare('INSERT INTO calendar_cells (date, time, block_id) VALUES (?, ?, ?)').bind(date, cell, id));
   try { await db.batch(statements); }
   catch (error) { if (/UNIQUE|constraint|PRIMARY KEY/i.test(String(error))) return fail('Há um agendamento ou bloqueio nesse período. Resolva-o antes de bloquear.', 409); throw error; }
+  mirrorLater(firebaseMirror('lovePetsBlocks', id, { date, time, reason: reason || null, createdAt: new Date().toISOString() }));
   return json({ ok: true }, 201);
 }
 
@@ -391,6 +431,13 @@ async function writeShopProduct(db, bucket, request, id = crypto.randomUUID()) {
     throw error;
   }
   if (uploadedKey && existing?.image.startsWith('products/')) await bucket.delete(existing.image).catch(error => console.error('Old product photo cleanup failed', error));
+  mirrorLater(firebaseMirror('lovePetsProducts', id, {
+    name: product.name, category: product.category, description: product.description,
+    usage: product.usage || existing?.usage || '', selection: product.selection || existing?.selection || '',
+    care: product.care || existing?.care || '', image: productImageUrl(image, origin), price: product.price,
+    available: product.available, stockQuantity: product.stockQuantity, flavors: product.flavors, sizes: product.sizes,
+    illustrative: false, updatedAt: new Date().toISOString(),
+  }, 'PATCH'));
   return json({ id, ok: true }, request.method === 'POST' ? 201 : 200);
 }
 
@@ -437,6 +484,7 @@ async function api(request, env, path) {
     try { body = await readBody(request); } catch { return fail('Dados inválidos.'); }
     if (body.stockQuantity !== null && (!Number.isInteger(body.stockQuantity) || body.stockQuantity < 0 || body.stockQuantity > 999999)) return fail('Informe uma quantidade válida.');
     const result = await db.prepare('UPDATE shop_products SET stock_quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(body.stockQuantity, stockProduct[1]).run();
+    if (result.meta?.changes) mirrorLater(firebaseMirror('lovePetsProducts', stockProduct[1], { stockQuantity: body.stockQuantity, updatedAt: new Date().toISOString() }));
     return result.meta?.changes ? json({ok:true}) : fail('Produto não encontrado.',404);
   }
   if (shopProduct && request.method === 'DELETE') {
@@ -444,6 +492,7 @@ async function api(request, env, path) {
     if (!existing) return fail('Produto não encontrado.', 404);
     await db.prepare('DELETE FROM shop_products WHERE id = ?').bind(shopProduct[1]).run();
     if (env.BUCKET && existing.image.startsWith('products/')) await env.BUCKET.delete(existing.image).catch(error => console.error('Product photo cleanup failed', error));
+    mirrorLater(firebaseMirror('lovePetsProducts', shopProduct[1], null, 'DELETE'));
     return json({ ok: true });
   }
   if (path === '/api/admin/calendar-url' && request.method === 'GET') return env.CALENDAR_FEED_TOKEN ? json({ url: `${url.origin}/api/calendar.ics?token=${encodeURIComponent(env.CALENDAR_FEED_TOKEN)}` }) : fail('Calendário externo não configurado.', 503);
@@ -451,7 +500,7 @@ async function api(request, env, path) {
   if (path === '/api/admin/services' && request.method === 'PUT') return saveServices(db, request);
   if (path === '/api/admin/blocks' && request.method === 'POST') return addBlock(db, request);
   const block = path.match(/^\/api\/admin\/blocks\/([0-9a-f-]{36})$/);
-  if (block && request.method === 'DELETE') { await db.batch([db.prepare('DELETE FROM calendar_cells WHERE block_id = ?').bind(block[1]), db.prepare('DELETE FROM blocked_slots WHERE id = ?').bind(block[1])]); return json({ ok: true }); }
+  if (block && request.method === 'DELETE') { await db.batch([db.prepare('DELETE FROM calendar_cells WHERE block_id = ?').bind(block[1]), db.prepare('DELETE FROM blocked_slots WHERE id = ?').bind(block[1])]); mirrorLater(firebaseMirror('lovePetsBlocks', block[1], null, 'DELETE')); return json({ ok: true }); }
   const appointment = path.match(/^\/api\/admin\/appointments\/([0-9a-f-]{36})$/);
   if (appointment && request.method === 'PATCH') return changeStatus(db, appointment[1], request);
   return fail('Rota não encontrada.', 404);

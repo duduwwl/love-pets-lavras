@@ -224,6 +224,12 @@ async function loadCatalog() {
   const localItems = demoItems ?? await loadStaticCatalog();
   if (localItems.length) showCatalog(localItems, localItems);
   try {
+    const firebaseItems = window.LovePetsFirebase ? await window.LovePetsFirebase.listProducts() : [];
+    if (firebaseItems.length) {
+      showCatalog(combineCatalog(firebaseItems, demoItems), localItems);
+    }
+  } catch { /* the API/static catalog remains the fallback */ }
+  try {
     const response = await fetch(`${window.LOVE_PETS_API_ORIGIN || ''}/api/products`, { signal: AbortSignal.timeout(4000), cache: 'no-store' });
     if (!response.ok) throw new Error('live products');
     const data = await response.json();

@@ -10,15 +10,31 @@
   services: [{ id: 'banho', label: 'Banho', durationMinutes: 60, enabled: true }, { id: 'banho-tosa', label: 'Banho e tosa', durationMinutes: 120, enabled: true }],
   hours: Array.from({ length: 7 }, (_, weekday) => ({ weekday, enabled: weekday >= 2, openTime: '12:00', closeTime: '18:00' })),
   appointments: [
-   { id: 'demo-1', date: addDay(1), time: '12:00', pet_name: 'Luna', pet_type: 'gato', guardian_name: 'Cliente exemplo 1', service: 'banho', duration_minutes: 60, status: 'pending', notes: 'Exemplo fictício' },
-   { id: 'demo-2', date: addDay(1), time: '14:00', pet_name: 'Theo', pet_type: 'cao', guardian_name: 'Cliente exemplo 2', service: 'banho-tosa', duration_minutes: 120, status: 'confirmed', notes: 'Exemplo fictício' },
-   { id: 'demo-3', date: addDay(2), time: '13:00', pet_name: 'Mel', pet_type: 'cao', guardian_name: 'Cliente exemplo 3', service: 'banho', duration_minutes: 60, status: 'pending', notes: 'Exemplo fictício' },
+   { id: 'demo-1', date: addDay(3), time: '12:00', pet_name: 'Luna', pet_type: 'gato', guardian_name: 'Cliente exemplo 1', service: 'banho', duration_minutes: 60, status: 'pending', notes: 'Exemplo fictício' },
+   { id: 'demo-2', date: addDay(3), time: '14:00', pet_name: 'Theo', pet_type: 'cao', guardian_name: 'Cliente exemplo 2', service: 'banho-tosa', duration_minutes: 120, status: 'confirmed', notes: 'Exemplo fictício' },
+   { id: 'demo-3', date: addDay(4), time: '13:00', pet_name: 'Mel', pet_type: 'cao', guardian_name: 'Cliente exemplo 3', service: 'banho', duration_minutes: 60, status: 'pending', notes: 'Exemplo fictício' },
   ],
   blocks: [],
  });
  let data;
  try { const stored = JSON.parse(localStorage.getItem(key)); data = stored?.today === today && Array.isArray(stored.appointments) ? stored : sample(); } catch { data = sample(); }
  const save = () => { try { localStorage.setItem(key, JSON.stringify(data)); } catch { throw new Error('O navegador não permitiu salvar os exemplos. Ative o armazenamento local para testar alterações.'); } };
+ const syncShared = async () => {
+  if (!window.LovePetsFirebase) return;
+  try {
+   const shared = await window.LovePetsFirebase.listAppointments();
+   const mapped = shared.filter(item => item.date && item.time).map(item => ({
+    id: item.id, date: item.date, time: item.time, service: item.service || 'banho',
+    duration_minutes: Number(item.durationMinutes || 60), pet_name: item.petName || '', pet_type: item.petType || 'cao',
+    guardian_name: item.guardianName || '', phone: item.phone || '', email: item.email || '', notes: item.notes || '',
+    taxydog: item.taxydog ? 1 : 0, pickup_address: item.pickupAddress || null, status: item.status || 'pending',
+   }));
+   const byId = new Map(data.appointments.map(item => [item.id, item]));
+   mapped.forEach(item => byId.set(item.id, item));
+   data.appointments = [...byId.values()];
+   save();
+  } catch { /* local demo remains usable while Firebase is unavailable */ }
+ };
  const min = time => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
  const timeOf = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
  const validTime = time => /^(?:[01]\d|2[01]):(?:00|30)$/.test(time);
@@ -61,7 +77,9 @@
    if (body.taxydog && String(body.pickupAddress || '').trim().length < 10) throw new Error('Informe o endereço completo para o Taxidog.');
    const id = `demo-${crypto.randomUUID()}`;
    data.appointments.push({ id, date: body.date, time: body.time, service: body.service, duration_minutes: service.durationMinutes, pet_name: String(body.petName).slice(0, 80), pet_type: body.petType, guardian_name: String(body.guardianName).slice(0, 100), phone, email: String(body.email || '').slice(0, 120), notes: String(body.notes || '').slice(0, 500), taxydog: body.taxydog ? 1 : 0, pickup_address: body.taxydog ? String(body.pickupAddress || '').slice(0, 240) : null, status: 'pending' });
-   save(); return { id, date: body.date, time: body.time, status: 'pending', calendarUrl: `/api/appointments/${id}.ics` };
+   save();
+   if (window.LovePetsFirebase) window.LovePetsFirebase.saveAppointment(id, { date: body.date, time: body.time, service: body.service, durationMinutes: service.durationMinutes, petName: body.petName, petType: body.petType, guardianName: body.guardianName, phone, email: body.email || null, notes: body.notes || null, taxydog: !!body.taxydog, pickupAddress: body.taxydog ? String(body.pickupAddress || '').slice(0, 240) : null, status: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }).catch(() => {});
+   return { id, date: body.date, time: body.time, status: 'pending', calendarUrl: `/api/appointments/${id}.ics` };
   }
   const visitorIcs = url.pathname.match(/^\/api\/appointments\/(demo-[\w-]+)\.ics$/);
   if (visitorIcs && method === 'GET') {
@@ -70,6 +88,7 @@
    return { calendarText: calendarText([item]) };
   }
   if (url.pathname === '/api/admin/state' && method === 'GET') {
+   await syncShared();
    const from = url.searchParams.get('from') || addDay(-7), to = url.searchParams.get('to') || addDay(45);
    if (from > to) throw new Error('A data inicial deve vir antes da data final.');
    return structuredClone({ ...data, appointments: data.appointments.filter(item => item.date >= from && item.date <= to).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)), blocks: data.blocks.filter(item => item.date >= from && item.date <= to) });
@@ -79,7 +98,7 @@
    const item = data.appointments.find(appointment => appointment.id === appointmentMatch[1]);
    if (!item || !['pending', 'confirmed', 'completed', 'cancelled'].includes(body.status)) throw new Error('Alteração inválida.');
    if (['pending', 'confirmed'].includes(body.status) && (data.blocks.some(block => blocked(item, block)) || data.appointments.some(other => other.id !== item.id && active(other) && overlaps(other, item)))) throw new Error('Este período está ocupado ou bloqueado.');
-   item.status = body.status; save(); return { ok: true };
+   item.status = body.status; save(); if (window.LovePetsFirebase) window.LovePetsFirebase.saveAppointment(item.id, { status: body.status, updatedAt: new Date().toISOString() }).catch(() => {}); return { ok: true };
   }
   if (url.pathname === '/api/admin/hours' && method === 'PUT') {
    if (!Array.isArray(body.hours) || body.hours.length !== 7 || body.hours.some(item => !Number.isInteger(item.weekday) || item.weekday < 0 || item.weekday > 6 || !validTime(item.openTime) || !validTime(item.closeTime) || (item.enabled && min(item.openTime) >= min(item.closeTime)))) throw new Error('Confira os horários de abertura e encerramento.');

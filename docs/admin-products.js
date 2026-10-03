@@ -39,6 +39,7 @@ const productPreview = productSection.querySelector('#product-preview');
 const productPhoto = productForm.elements.photo;
 let managedProducts = [];
 let uploadedImage = '';
+let firebaseCatalogSynced = false;
 const productDemoKey = 'love-pets-demo-products-v1';
 const productDemoSeedKey = 'love-pets-demo-products-seeded-v1';
 
@@ -70,10 +71,30 @@ async function productsApi(path, options = {}) {
     } else {
       try { items = JSON.parse(stored); } catch { items = []; }
     }
+    if (window.LovePetsFirebase) {
+      let shared = await window.LovePetsFirebase.listProducts();
+      if (!firebaseCatalogSynced) {
+        const sharedIds = new Set(shared.map(item => item.id));
+        const localOnly = items.filter(item => !sharedIds.has(item.id));
+        if (!shared.length || localOnly.length) {
+          for (const item of (!shared.length ? items : localOnly)) {
+            await window.LovePetsFirebase.saveProduct(item.id, item);
+          }
+          shared = await window.LovePetsFirebase.listProducts();
+        }
+        firebaseCatalogSynced = true;
+      }
+      items = shared.length ? shared : items;
+    }
     if (options.method === 'POST') items.unshift({ ...JSON.parse(options.body), id: crypto.randomUUID() });
     if (options.method === 'PUT') items = items.map(item => item.id === path.split('/').pop() ? { ...JSON.parse(options.body), id: item.id } : item);
     if (options.method === 'PATCH') items = items.map(item => item.id === path.split('/').at(-2) ? { ...item, ...JSON.parse(options.body) } : item);
     if (options.method === 'DELETE') items = items.filter(item => item.id !== path.split('/').pop());
+    if (window.LovePetsFirebase && options.method) {
+      const id = options.method === 'POST' ? items[0].id : options.method === 'PATCH' ? path.split('/').at(-2) : path.split('/').at(-1);
+      if (options.method === 'DELETE') await window.LovePetsFirebase.deleteProduct(id);
+      else await window.LovePetsFirebase.saveProduct(id, items.find(item => item.id === id));
+    }
     if (options.method) localStorage.setItem(productDemoKey, JSON.stringify(items));
     return { products: items };
   }

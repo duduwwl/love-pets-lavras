@@ -152,6 +152,15 @@ form.addEventListener('submit', async event => {
   submitButton.textContent = 'Enviando solicitação';
   try {
     const booking = await api('/api/appointments', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+    if (window.LovePetsFirebase && booking.id) {
+      window.LovePetsFirebase.saveAppointment(booking.id, {
+        date: payload.date, time: payload.time, service: payload.service,
+        petName: payload.petName, petType: payload.petType, guardianName: payload.guardianName,
+        phone: String(payload.phone || '').replace(/\D/g, ''), email: payload.email || null,
+        notes: payload.notes || null, taxydog: !!payload.taxydog, pickupAddress: payload.pickupAddress || null,
+        status: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      }).catch(() => {});
+    }
     form.hidden = true;
     document.querySelector('#booking-success').hidden = false;
     const dateLabel = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full', timeZone: 'UTC' }).format(new Date(`${booking.date}T12:00:00Z`));
