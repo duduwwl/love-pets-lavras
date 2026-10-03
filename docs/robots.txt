@@ -1,4 +1,4 @@
 User-agent: *
-Disallow: /love-pets-lavras/equipe/
-Disallow: /love-pets-lavras/admin/
-Sitemap: https://duduwwl.github.io/love-pets-lavras/sitemap.xml
+Disallow: /equipe/
+Disallow: /admin/
+Sitemap: https://lovepets.app.br/sitemap.xml

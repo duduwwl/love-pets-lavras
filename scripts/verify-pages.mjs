@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {existsSync,readFileSync,readdirSync} from 'node:fs';
 import {join} from 'node:path';
 const root=join(process.cwd(),'docs');
-const base='/love-pets-lavras/';
+const base='/';
 const pages=['index.html','produtos/index.html','agendar/index.html','equipe/index.html','demo-admin/index.html','admin/index.html','404.html'];
 let references=0;
 for(const path of pages){

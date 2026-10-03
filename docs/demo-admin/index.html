@@ -6,26 +6,26 @@
   <meta name="theme-color" content="#92232a">
   <title>Painel de demonstração | Love Pets</title>
   <meta name="robots" content="noindex,nofollow">
-  <link rel="icon" type="image/webp" href="/love-pets-lavras/assets/love-pets-logo.webp">
+  <link rel="icon" type="image/webp" href="/assets/love-pets-logo.webp">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/love-pets-lavras/schedule.css">
-  <script src="/love-pets-lavras/runtime.js?v=5" defer></script>
-  <script src="/love-pets-lavras/firebase-sync.js?v=1" defer></script><script src="/love-pets-lavras/demo-admin-data.js?v=5" defer></script><script src="/love-pets-lavras/admin.js?v=5" defer></script><script src="/love-pets-lavras/admin-products.js?v=6" defer></script>
-  <link rel="canonical" href="https://duduwwl.github.io/love-pets-lavras/demo-admin/">
-  <meta property="og:url" content="https://duduwwl.github.io/love-pets-lavras/demo-admin/">
+  <link rel="stylesheet" href="/schedule.css">
+  <script src="/runtime.js?v=5" defer></script>
+  <script src="/firebase-sync.js?v=1" defer></script><script src="/demo-admin-data.js?v=5" defer></script><script src="/admin.js?v=5" defer></script><script src="/admin-products.js?v=6" defer></script>
+  <link rel="canonical" href="https://lovepets.app.br/demo-admin/">
+  <meta property="og:url" content="https://lovepets.app.br/demo-admin/">
 </head>
 <body class="admin-page">
   <a class="skip-link" href="#agenda">Pular para a agenda</a>
   <div class="top-strip"><span>LOVE PETS · ÁREA DA EQUIPE</span><span>Lavras, MG</span></div>
-  <header class="schedule-header"><a href="/love-pets-lavras/" aria-label="Love Pets, voltar ao site"><img src="/love-pets-lavras/assets/love-pets-logo.webp" alt="Love Pets" width="155" height="68"></a><nav aria-label="Navegação"><a href="/love-pets-lavras/">Ver site</a><a href="/love-pets-lavras/agendar/">Ver agendamento</a><a class="header-help" href="/love-pets-lavras/equipe/">Sair</a></nav></header>
-  <main class="admin-shell" id="agenda"><div class="admin-heading"><div><div class="eyebrow"><span></span> PAINEL DE DEMONSTRAÇÃO</div><h1>Agenda <em>Love Pets.</em></h1><p>Confirme solicitações, ajuste a disponibilidade e acompanhe os próximos atendimentos.</p></div><a class="admin-new" href="/love-pets-lavras/agendar/">Abrir página de agendamento</a></div>
+  <header class="schedule-header"><a href="/" aria-label="Love Pets, voltar ao site"><img src="/assets/love-pets-logo.webp" alt="Love Pets" width="155" height="68"></a><nav aria-label="Navegação"><a href="/">Ver site</a><a href="/agendar/">Ver agendamento</a><a class="header-help" href="/equipe/">Sair</a></nav></header>
+  <main class="admin-shell" id="agenda"><div class="admin-heading"><div><div class="eyebrow"><span></span> PAINEL DE DEMONSTRAÇÃO</div><h1>Agenda <em>Love Pets.</em></h1><p>Confirme solicitações, ajuste a disponibilidade e acompanhe os próximos atendimentos.</p></div><a class="admin-new" href="/agendar/">Abrir página de agendamento</a></div>
     <aside class="demo-banner"><p><strong>Demonstração com dados fictícios.</strong><br>Teste reservas, horários e bloqueios. As solicitações e os produtos são sincronizados no banco compartilhado da Love Pets.</p><button type="button" id="reset-demo">Restaurar exemplos</button></aside><div id="admin-message" class="admin-message" role="status" aria-live="polite"></div>
     <div class="summary-grid"><div class="summary-card"><span>Solicitações pendentes</span><strong id="count-pending">—</strong></div><div class="summary-card"><span>Confirmados</span><strong id="count-confirmed">—</strong></div><div class="summary-card"><span>Próximos atendimentos</span><strong id="count-upcoming">—</strong></div></div>
     <nav class="admin-tabs" aria-label="Seções do painel"><a href="#agenda-list">Agenda</a><a href="#configuracao">Horários e serviços</a><a href="#bloqueios">Bloqueios</a><a href="#produtos">Produtos da loja</a></nav>
     <section class="admin-panel" id="agenda-list"><div class="panel-heading"><div><span class="panel-kicker">ATENDIMENTOS</span><h2>Solicitações e reservas</h2></div><div class="range-controls"><label>De <input id="range-from" type="date"></label><label>Até <input id="range-to" type="date"></label><button id="refresh-agenda" type="button">Atualizar</button></div></div><div id="appointments-list" class="appointments-list"><p class="muted">Carregando agenda...</p></div></section>
     <div class="admin-columns"><section class="admin-panel" id="configuracao"><div class="panel-heading"><div><span class="panel-kicker">DISPONIBILIDADE</span><h2>Horários da semana</h2></div></div><p class="panel-help">Marque os dias de atendimento e ajuste abertura e encerramento. Reservas já feitas permanecem na agenda.</p><form id="hours-form"><div id="hours-list" class="hours-list"></div><button class="admin-save" type="submit">Salvar horários</button></form><div class="divider"></div><div class="panel-heading"><div><span class="panel-kicker">DURAÇÃO</span><h2>Serviços</h2></div></div><p class="panel-help">O tempo de cada serviço reserva intervalos de 30 minutos na agenda, evitando sobreposição.</p><form id="services-form"><div id="services-list" class="services-list"></div><button class="admin-save" type="submit">Salvar serviços</button></form></section>
       <div class="side-stack"><section class="admin-panel" id="bloqueios"><div class="panel-heading"><div><span class="panel-kicker">FOLGAS E IMPREVISTOS</span><h2>Bloquear período</h2></div></div><p class="panel-help">Bloqueie o dia inteiro ou um intervalo de 30 minutos. Se houver reserva, cancele-a antes.</p><form id="block-form" class="block-form"><label>Data<input name="date" type="date" required></label><label>Horário<select name="time"><option value="*">Dia inteiro</option></select></label><label class="full">Motivo <small>(opcional)</small><input name="reason" type="text" maxlength="100" placeholder="Ex.: feriado ou manutenção"></label><button class="admin-save" type="submit">Adicionar bloqueio</button></form><div id="blocks-list" class="blocks-list"></div></section></div></div>
-  </main><footer class="schedule-footer"><span>Love Pets · Gestão de agendamentos</span><a href="/love-pets-lavras/">Início</a><a href="/love-pets-lavras/produtos/">Produtos</a></footer>
+  </main><footer class="schedule-footer"><span>Love Pets · Gestão de agendamentos</span><a href="/">Início</a><a href="/produtos/">Produtos</a></footer>
 </body>
 </html>
