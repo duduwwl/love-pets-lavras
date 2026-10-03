@@ -78,7 +78,7 @@ function renderAppointments() {
       const next = select.value;
       if (next === 'cancelled' && !confirm(`Cancelar o horário de ${item.pet_name} em ${dateLabel(item.date)} às ${item.time}?`)) { select.value = item.status; return; }
       select.disabled = true;
-      try { await apiWrite(`/api/admin/appointments/${item.id}`, 'PATCH', { status: next }); tell('Agendamento atualizado.', true); await loadState(); }
+      try { await apiWrite(`/api/admin/appointments/${item.id}`, 'PATCH', { status: next }); if (window.LovePetsFirebase && !window.LOVE_PETS_DEMO_API) await window.LovePetsFirebase.saveAppointment(item.id, { status: next, updatedAt: new Date().toISOString() }); tell('Agendamento atualizado.', true); await loadState(); }
       catch (error) { select.value = item.status; tell(error.message); select.disabled = false; }
     });
     actions.append(pill, select); card.append(when, pet, person, actions); list.append(card);

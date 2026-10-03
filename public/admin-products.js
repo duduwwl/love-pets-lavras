@@ -129,7 +129,7 @@ function renderManagedProducts() {
       const quantity = stockInput.value === '' ? null : Number(stockInput.value);
       if (quantity !== null && (!Number.isInteger(quantity) || quantity < 0 || quantity > 999999)) { productTell('Informe uma quantidade válida.'); return; }
       saveStock.disabled = true;
-      try { await productsApi(`/api/admin/products/${product.id}/stock`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stockQuantity: quantity }) }); await loadManagedProducts(); productTell('Estoque atualizado na loja.', true); }
+      try { await productsApi(`/api/admin/products/${product.id}/stock`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stockQuantity: quantity }) }); if (window.LovePetsFirebase && !productDemo) await window.LovePetsFirebase.saveProduct(product.id, { stockQuantity: quantity, updatedAt: new Date().toISOString() }); await loadManagedProducts(); productTell('Estoque atualizado na loja.', true); }
       catch (error) { productTell(error.message); saveStock.disabled = false; }
     });
     stockLabel.append(stockInput); stock.append(stockLabel, saveStock);
@@ -150,7 +150,7 @@ function renderManagedProducts() {
     remove.addEventListener('click', async () => {
       if (!confirm(`Excluir ${product.name} da loja?`)) return;
       remove.disabled = true;
-      try { await productsApi(`/api/admin/products/${product.id}`, { method: 'DELETE' }); await loadManagedProducts(); productTell('Produto excluído.', true); }
+      try { await productsApi(`/api/admin/products/${product.id}`, { method: 'DELETE' }); if (window.LovePetsFirebase && !productDemo) await window.LovePetsFirebase.deleteProduct(product.id); await loadManagedProducts(); productTell('Produto excluído.', true); }
       catch (error) { productTell(error.message); remove.disabled = false; }
     });
     row.append(photo, info, stock, edit, remove); productList.append(row);
@@ -196,7 +196,8 @@ productForm.addEventListener('submit', async event => {
   body.sizes = productForm.elements.sizes.value.split(',').map(value => value.trim()).filter(Boolean);
   const button = productForm.querySelector('[type=submit]'); button.disabled = true;
   try {
-    await productsApi(id ? `/api/admin/products/${id}` : '/api/admin/products', { method: id ? 'PUT' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const saved = await productsApi(id ? `/api/admin/products/${id}` : '/api/admin/products', { method: id ? 'PUT' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    if (window.LovePetsFirebase && !productDemo) await window.LovePetsFirebase.saveProduct(id || saved.id, body);
     resetProductForm(); await loadManagedProducts(); productTell(productDemo ? 'Exemplo salvo neste navegador.' : 'Produto publicado na loja.', true);
   } catch (error) { productTell(error.message); }
   finally { button.disabled = false; }
