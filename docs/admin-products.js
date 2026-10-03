@@ -14,9 +14,9 @@ productSection.id = 'produtos';
 productSection.style.marginTop = '20px';
 productSection.innerHTML = `<div class="panel-heading"><div><span class="panel-kicker">LOJA</span><h2>Produtos da loja</h2></div></div>
   <p class="panel-help">${productDemo
-    ? 'Os produtos da loja já aparecem aqui. Ajuste o estoque de cada item; nesta demonstração, as alterações ficam apenas neste navegador.'
+    ? 'Os produtos da loja já aparecem aqui. Ajuste o estoque de cada item; as alterações são sincronizadas entre os dispositivos.'
     : 'Os produtos fotografados estão cadastrados com estoque a conferir. Atualize preço e quantidade aqui; novos produtos publicados aparecem na loja.'}</p>
-  ${productDemo ? '<p class="team-note">As alterações da demonstração ficam apenas neste navegador e não pedem acesso à conta real.</p>' : ''}
+  ${productDemo ? '<p class="team-note">Esta demonstração usa o banco compartilhado da Love Pets para que os produtos apareçam em qualquer navegador.</p>' : ''}
   <form id="product-form" class="product-form">
     <input type="hidden" name="productId">
     <label>Nome do produto<input name="name" required maxlength="100"></label>

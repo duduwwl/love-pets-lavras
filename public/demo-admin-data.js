@@ -1,4 +1,4 @@
-// Shared fictional agenda for the GitHub Pages demonstration. It never calls the live API.
+// Shared agenda for the GitHub Pages demonstration, with Firebase sync when available.
 (() => {
  if (!window.LOVE_PETS_DEMO_MODE) return;
  const key = 'love-pets-demo-v2';
